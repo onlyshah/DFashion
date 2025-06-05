@@ -1,0 +1,227 @@
+# DFashion Project - Git Attributes
+# ==================================
+
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source code
+*.js text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.sass text eol=lf
+*.less text eol=lf
+*.xml text eol=lf
+*.svg text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Configuration files
+*.config text eol=lf
+*.conf text eol=lf
+*.ini text eol=lf
+*.env text eol=lf
+.env* text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+.editorconfig text eol=lf
+
+# Angular specific
+*.component.ts text eol=lf
+*.service.ts text eol=lf
+*.module.ts text eol=lf
+*.directive.ts text eol=lf
+*.pipe.ts text eol=lf
+*.guard.ts text eol=lf
+*.interceptor.ts text eol=lf
+
+# Node.js specific
+package.json text eol=lf
+package-lock.json text eol=lf
+yarn.lock text eol=lf
+.nvmrc text eol=lf
+
+# Documentation
+README* text eol=lf
+CHANGELOG* text eol=lf
+LICENSE* text eol=lf
+CONTRIBUTING* text eol=lf
+
+# Scripts
+*.sh text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Images
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
+*.webp binary
+*.bmp binary
+*.tiff binary
+
+# Fonts
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.ttf binary
+*.otf binary
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.rar binary
+*.7z binary
+
+# Audio/Video
+*.mp3 binary
+*.mp4 binary
+*.avi binary
+*.mov binary
+*.wav binary
+*.flac binary
+
+# Documents
+*.pdf binary
+*.doc binary
+*.docx binary
+*.xls binary
+*.xlsx binary
+*.ppt binary
+*.pptx binary
+
+# Database
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+
+# Compiled files
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# Language specific attributes
+*.c text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+*.java text eol=lf
+*.py text eol=lf
+*.rb text eol=lf
+*.php text eol=lf
+*.go text eol=lf
+*.rs text eol=lf
+
+# Merge strategies for specific files
+package-lock.json merge=ours
+yarn.lock merge=ours
+*.generated.* merge=ours
+
+# Export ignore (files not included in git archive)
+.gitignore export-ignore
+.gitattributes export-ignore
+.github/ export-ignore
+docs/ export-ignore
+tests/ export-ignore
+*.test.* export-ignore
+*.spec.* export-ignore
+
+# Linguist overrides (for GitHub language detection)
+*.html linguist-detectable=false
+*.css linguist-detectable=false
+demo-app/* linguist-documentation
+docs/* linguist-documentation
+*.md linguist-documentation
+
+# Diff settings
+*.json diff=json
+*.md diff=markdown
+*.html diff=html
+*.css diff=css
+*.js diff=javascript
+*.ts diff=typescript
+
+# Custom diff for package files
+package.json diff=json
+package-lock.json diff=json
+yarn.lock -diff
+
+# Binary files that should not be diffed
+*.png -diff
+*.jpg -diff
+*.jpeg -diff
+*.gif -diff
+*.ico -diff
+*.pdf -diff
+*.zip -diff
+*.tar -diff
+*.gz -diff
+
+# Files that should be treated as text despite extension
+*.min.js text
+*.min.css text
+
+# Files that should be normalized
+*.js text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.md text eol=lf
+
+# Prevent specific files from being normalized
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Special handling for Angular files
+angular.json text eol=lf
+tsconfig*.json text eol=lf
+tslint.json text eol=lf
+karma.conf.js text eol=lf
+protractor.conf.js text eol=lf
+
+# Special handling for Node.js files
+server.js text eol=lf
+app.js text eol=lf
+index.js text eol=lf
+*.route.js text eol=lf
+*.controller.js text eol=lf
+*.service.js text eol=lf
+*.model.js text eol=lf
+*.middleware.js text eol=lf
+
+# Docker files
+Dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+.dockerignore text eol=lf
+
+# CI/CD files
+.travis.yml text eol=lf
+.github/workflows/*.yml text eol=lf
+.gitlab-ci.yml text eol=lf
+azure-pipelines.yml text eol=lf
+Jenkinsfile text eol=lf
+
+# IDE files
+.vscode/*.json text eol=lf
+.idea/*.xml text eol=lf
+*.sublime-project text eol=lf
+*.sublime-workspace text eol=lf
+
+# Linting and formatting
+.eslintrc* text eol=lf
+.prettierrc* text eol=lf
+.stylelintrc* text eol=lf
+.editorconfig text eol=lf
