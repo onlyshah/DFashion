@@ -329,91 +329,18 @@ export class SidebarComponent implements OnInit {
   }
 
   loadSuggestedUsers() {
-    // Mock data for demo
-    this.suggestedUsers = [
-      {
-        id: '1',
-        username: 'ethnic_elegance',
-        fullName: 'Anita Desai',
-        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
-        followedBy: 'Followed by maya + 2 more',
-        isFollowing: false
-      },
-      {
-        id: '2',
-        username: 'trendy_priya',
-        fullName: 'Priya Singh',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-        followedBy: 'Followed by raj + 3 more',
-        isFollowing: false
-      }
-    ];
+    // Load from API - empty for now
+    this.suggestedUsers = [];
   }
 
   loadTrendingProducts() {
-    // Mock data for demo
-    this.trendingProducts = [
-      {
-        _id: '1',
-        name: 'Ethnic Kurti Set',
-        price: 3299,
-        originalPrice: 4599,
-        images: [{ url: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=150', isPrimary: true }],
-        analytics: { views: 2.3, likes: 0, shares: 0, purchases: 0 }
-      } as Product,
-      {
-        _id: '2',
-        name: 'Denim Jacket',
-        price: 2999,
-        originalPrice: 3999,
-        images: [{ url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=150', isPrimary: true }],
-        analytics: { views: 1.8, likes: 0, shares: 0, purchases: 0 }
-      } as Product,
-      {
-        _id: '3',
-        name: 'Summer Crop Top',
-        price: 1299,
-        originalPrice: 1799,
-        images: [{ url: 'https://images.unsplash.com/photo-1564257577-2d3b9b2c1e8b?w=150', isPrimary: true }],
-        analytics: { views: 1.5, likes: 0, shares: 0, purchases: 0 }
-      } as Product
-    ];
+    // Load from API - empty for now
+    this.trendingProducts = [];
   }
 
   loadTopInfluencers() {
-    // Mock data for demo
-    this.topInfluencers = [
-      {
-        id: '1',
-        username: 'style_guru_raj',
-        fullName: 'Raj Patel',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-        followersCount: 5600,
-        postsCount: 45,
-        engagement: 98,
-        isFollowing: false
-      },
-      {
-        id: '2',
-        username: 'ethnic_elegance',
-        fullName: 'Anita Desai',
-        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
-        followersCount: 8900,
-        postsCount: 67,
-        engagement: 95,
-        isFollowing: false
-      },
-      {
-        id: '3',
-        username: 'fashionista_maya',
-        fullName: 'Maya Sharma',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-        followersCount: 1200,
-        postsCount: 12,
-        engagement: 92,
-        isFollowing: false
-      }
-    ];
+    // Load from API - empty for now
+    this.topInfluencers = [];
   }
 
   loadCategories() {

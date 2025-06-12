@@ -4,6 +4,8 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialogModule } from '@angular/material/dialog';
+import { IonicModule } from '@ionic/angular';
+import { IonicStorageModule } from '@ionic/storage-angular';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -13,6 +15,15 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAnimations(),
-    importProvidersFrom(MatSnackBarModule, MatDialogModule)
+    importProvidersFrom(
+      MatSnackBarModule,
+      MatDialogModule,
+      IonicModule.forRoot({
+        mode: 'ios',
+        rippleEffect: true,
+        animated: true
+      }),
+      IonicStorageModule.forRoot()
+    )
   ]
 };

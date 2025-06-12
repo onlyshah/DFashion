@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { CartService } from '../../../core/services/cart.service';
 import { User } from '../../../core/models/user.model';
 
 @Component({
@@ -22,13 +23,15 @@ import { User } from '../../../core/models/user.model';
           </div>
 
           <!-- Search Bar -->
-          <div class="search-bar">
+          <div class="search-bar" (click)="openSearch()">
             <i class="fas fa-search"></i>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search for fashion, brands, and more..."
               [(ngModel)]="searchQuery"
               (keyup.enter)="onSearch()"
+              (click)="openSearch()"
+              readonly
             >
           </div>
 
@@ -50,11 +53,16 @@ import { User } from '../../../core/models/user.model';
               <i class="fas fa-heart"></i>
               <span>Wishlist</span>
             </a>
-            
-            <!-- User Menu -->
-            <div class="user-menu" (click)="toggleUserMenu()">
-              <img [src]="currentUser?.avatar" [alt]="currentUser?.fullName" class="user-avatar">
-              <span class="username">{{ currentUser?.username }}</span>
+            <a routerLink="/cart" routerLinkActive="active" class="nav-item cart-item">
+              <i class="fas fa-shopping-cart"></i>
+              <span>Cart</span>
+              <span class="cart-badge" *ngIf="cartItemCount > 0">{{ cartItemCount }}</span>
+            </a>
+
+            <!-- User Menu for logged in users -->
+            <div *ngIf="currentUser" class="user-menu" (click)="toggleUserMenu()">
+              <img [src]="currentUser.avatar" [alt]="currentUser.fullName" class="user-avatar">
+              <span class="username">{{ currentUser.username }}</span>
               <i class="fas fa-chevron-down"></i>
               
               <!-- Dropdown Menu -->
@@ -68,20 +76,26 @@ import { User } from '../../../core/models/user.model';
                   Settings
                 </a>
                 <div class="dropdown-divider"></div>
-                <a *ngIf="currentUser?.role === 'vendor'" routerLink="/vendor/dashboard" class="dropdown-item">
+                <a *ngIf="currentUser.role === 'vendor'" routerLink="/vendor/dashboard" class="dropdown-item">
                   <i class="fas fa-store"></i>
                   Vendor Dashboard
                 </a>
-                <a *ngIf="currentUser?.role === 'admin'" routerLink="/admin" class="dropdown-item">
+                <a *ngIf="currentUser.role === 'admin'" routerLink="/admin" class="dropdown-item">
                   <i class="fas fa-shield-alt"></i>
                   Admin Panel
                 </a>
-                <div class="dropdown-divider" *ngIf="currentUser?.role !== 'customer'"></div>
+                <div class="dropdown-divider" *ngIf="currentUser.role !== 'customer'"></div>
                 <button (click)="logout()" class="dropdown-item logout">
                   <i class="fas fa-sign-out-alt"></i>
                   Logout
                 </button>
               </div>
+            </div>
+
+            <!-- Login/Register for guest users -->
+            <div *ngIf="!currentUser" class="auth-buttons">
+              <a routerLink="/auth/login" class="btn btn-outline">Login</a>
+              <a routerLink="/auth/register" class="btn btn-primary">Sign Up</a>
             </div>
           </nav>
         </div>
@@ -174,6 +188,61 @@ import { User } from '../../../core/models/user.model';
     .nav-item.active,
     .nav-item:hover {
       color: var(--primary-color);
+    }
+
+    .cart-item {
+      position: relative;
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      background: #ef4444;
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 10px;
+      min-width: 16px;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .auth-buttons {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+
+    .btn-outline {
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+      background: transparent;
+    }
+
+    .btn-outline:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
     }
 
     .user-menu {
@@ -292,13 +361,26 @@ export class HeaderComponent implements OnInit {
   currentUser: User | null = null;
   searchQuery = '';
   showUserMenu = false;
+  cartItemCount = 0;
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private cartService: CartService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
+
+    // Subscribe to cart count
+    this.cartService.cartItemCount$.subscribe((count: number) => {
+      this.cartItemCount = count;
+    });
+
+    // Load cart on init
+    this.cartService.loadCart();
 
     // Close dropdown when clicking outside
     document.addEventListener('click', (event) => {
@@ -313,10 +395,18 @@ export class HeaderComponent implements OnInit {
     this.showUserMenu = !this.showUserMenu;
   }
 
+  openSearch() {
+    this.router.navigate(['/search']);
+  }
+
   onSearch() {
     if (this.searchQuery.trim()) {
-      // Navigate to search results
-      console.log('Searching for:', this.searchQuery);
+      this.router.navigate(['/search'], {
+        queryParams: { q: this.searchQuery }
+      });
+      this.searchQuery = ''; // Clear search after navigation
+    } else {
+      this.router.navigate(['/search']);
     }
   }
 

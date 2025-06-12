@@ -1,35 +1,6 @@
-// Import dependencies with fallback for missing modules
-let jwt, User;
-
-try {
-  jwt = require('jsonwebtoken');
-} catch (error) {
-  console.log('jsonwebtoken not found, using simple token handling');
-  jwt = {
-    verify: (token) => ({ userId: '1', role: 'super_admin' }),
-    sign: (payload) => 'demo-token-' + Date.now()
-  };
-}
-
-try {
-  User = require('../models/User');
-} catch (error) {
-  console.log('User model not found, using mock user data');
-  User = {
-    findById: (id) => ({
-      select: () => Promise.resolve({
-        _id: id,
-        fullName: 'Demo Admin',
-        email: 'admin@dfashion.com',
-        role: 'super_admin',
-        department: 'administration',
-        isActive: true,
-        lastLogin: new Date(),
-        save: () => Promise.resolve()
-      })
-    })
-  };
-}
+// Import dependencies - no fallbacks, require database
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 // Admin roles that can access dashboard
 const ADMIN_ROLES = [

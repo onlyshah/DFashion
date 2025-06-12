@@ -23,8 +23,8 @@ import { PostCardComponent } from '../post-card/post-card.component';
       </div>
 
       <div class="posts-container">
-        <app-post-card 
-          *ngFor="let post of posts; trackBy: trackByPostId" 
+        <app-post-card
+          *ngFor="let post of posts; trackBy: trackByPostId"
           [post]="post"
           (liked)="onPostLiked($event)"
           (commented)="onPostCommented($event)"
@@ -147,106 +147,12 @@ export class FeedComponent implements OnInit {
       error: (error) => {
         console.error('Error loading posts:', error);
         this.loading = false;
-        // Load mock data for demo when backend is not available
-        this.loadMockPosts();
+        this.posts = [];
       }
     });
   }
 
-  loadMockPosts() {
-    // Mock posts data for demo
-    this.posts = [
-      {
-        _id: '1',
-        user: {
-          _id: '1',
-          username: 'fashionista_maya',
-          fullName: 'Maya Sharma',
-          avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-          socialStats: { followersCount: 1250 }
-        },
-        caption: 'Loving this new floral dress! Perfect for the summer vibes 🌸 #SummerFashion #FloralDress #OOTD',
-        media: [
-          {
-            type: 'image',
-            url: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600',
-            alt: 'Summer floral dress outfit'
-          }
-        ],
-        products: [
-          {
-            product: {
-              _id: 'p1',
-              name: 'Floral Maxi Dress',
-              price: 2499,
-              images: [{ url: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=100', isPrimary: true }],
-              brand: 'StyleCraft'
-            },
-            position: { x: 40, y: 50 },
-            size: 'M',
-            color: 'Blue Floral'
-          }
-        ],
-        hashtags: ['SummerFashion', 'FloralDress', 'OOTD', 'StyleInspo'],
-        mentions: [],
-        likes: [],
-        comments: [],
-        shares: [],
-        saves: [],
-        isActive: true,
-        visibility: 'public',
-        analytics: { views: 1250, likes: 189, comments: 23, shares: 45, saves: 67, productClicks: 89, purchases: 12 },
-        settings: { allowComments: true, allowSharing: true },
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        updatedAt: new Date()
-      },
-      {
-        _id: '2',
-        user: {
-          _id: '2',
-          username: 'style_guru_raj',
-          fullName: 'Raj Patel',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-          socialStats: { followersCount: 5600 }
-        },
-        caption: 'Perfect formal shirt for office meetings! Quality fabric and great fit 👔 #FormalWear #OfficeStyle',
-        media: [
-          {
-            type: 'image',
-            url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600',
-            alt: 'Formal shirt'
-          }
-        ],
-        products: [
-          {
-            product: {
-              _id: 'p2',
-              name: 'Classic White Shirt',
-              price: 1899,
-              images: [{ url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=100', isPrimary: true }],
-              brand: 'StyleCraft'
-            },
-            position: { x: 50, y: 50 },
-            size: 'L',
-            color: 'White'
-          }
-        ],
-        hashtags: ['FormalWear', 'OfficeStyle'],
-        mentions: [],
-        likes: [],
-        comments: [],
-        shares: [],
-        saves: [],
-        isActive: true,
-        visibility: 'public',
-        analytics: { views: 890, likes: 156, comments: 12, shares: 23, saves: 34, productClicks: 67, purchases: 8 },
-        settings: { allowComments: true, allowSharing: true },
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-        updatedAt: new Date()
-      }
-    ];
-    this.loading = false;
-  }
+
 
   loadMorePosts() {
     this.currentPage++;

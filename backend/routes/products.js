@@ -248,4 +248,113 @@ router.post('/:id/review', [
   }
 });
 
+// @route   GET /api/products/categories
+// @desc    Get all product categories
+// @access  Public
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await Product.distinct('category');
+    const subcategories = await Product.distinct('subcategory');
+    const brands = await Product.distinct('brand');
+
+    // Get category counts
+    const categoryStats = await Product.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: '$category', count: { $sum: 1 } } }
+    ]);
+
+    const subcategoryStats = await Product.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: { category: '$category', subcategory: '$subcategory' }, count: { $sum: 1 } } }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        categories: categories.map(cat => ({
+          name: cat,
+          count: categoryStats.find(stat => stat._id === cat)?.count || 0
+        })),
+        subcategories: subcategoryStats.map(stat => ({
+          category: stat._id.category,
+          name: stat._id.subcategory,
+          count: stat.count
+        })),
+        brands: brands.sort()
+      }
+    });
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch categories'
+    });
+  }
+});
+
+// @route   GET /api/products/filters
+// @desc    Get filter options for products
+// @access  Public
+router.get('/filters', async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    let matchStage = { isActive: true };
+    if (category) {
+      matchStage.category = category;
+    }
+
+    const [priceRange, sizes, colors, brands] = await Promise.all([
+      // Price range
+      Product.aggregate([
+        { $match: matchStage },
+        { $group: {
+          _id: null,
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' }
+        }}
+      ]),
+
+      // Available sizes
+      Product.aggregate([
+        { $match: matchStage },
+        { $unwind: '$sizes' },
+        { $group: { _id: '$sizes.size', count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+
+      // Available colors
+      Product.aggregate([
+        { $match: matchStage },
+        { $unwind: '$colors' },
+        { $group: { _id: '$colors.name', count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+
+      // Brands
+      Product.aggregate([
+        { $match: matchStage },
+        { $group: { _id: '$brand', count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        priceRange: priceRange[0] || { minPrice: 0, maxPrice: 10000 },
+        sizes: sizes.map(s => ({ name: s._id, count: s.count })),
+        colors: colors.map(c => ({ name: c._id, count: c.count })),
+        brands: brands.map(b => ({ name: b._id, count: b.count }))
+      }
+    });
+  } catch (error) {
+    console.error('Get filters error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch filters'
+    });
+  }
+});
+
 module.exports = router;

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, TitleCasePipe } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 
@@ -9,7 +9,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, TitleCasePipe],
   template: `
     <div class="auth-container">
       <div class="auth-card">
@@ -17,6 +17,12 @@ import { NotificationService } from '../../../../core/services/notification.serv
         <div class="logo">
           <h1 class="gradient-text">DFashion</h1>
           <p>Social E-commerce Platform</p>
+        </div>
+
+        <!-- Login Header -->
+        <div class="login-header">
+          <h3>Welcome Back</h3>
+          <p>Sign in to your account</p>
         </div>
 
         <!-- Login Form -->
@@ -49,8 +55,16 @@ import { NotificationService } from '../../../../core/services/notification.serv
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <div class="form-group remember-me">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="rememberMe">
+              <span class="checkmark"></span>
+              Remember me
+            </label>
+          </div>
+
+          <button
+            type="submit"
             class="btn-primary auth-btn"
             [disabled]="loginForm.invalid || loading"
           >
@@ -63,37 +77,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
           </div>
         </form>
 
-        <!-- Demo Accounts -->
-        <div class="demo-accounts">
-          <h4>Demo Accounts (Backend Not Required)</h4>
-          <p class="demo-note">Click to auto-fill credentials or use them manually:</p>
-          <div class="demo-buttons">
-            <button (click)="loginAsDemo('customer')" class="demo-btn">
-              <i class="fas fa-user"></i>
-              <div class="demo-info">
-                <strong>Customer Demo</strong>
-                <small>maya&#64;example.com / password123</small>
-              </div>
-            </button>
-            <button (click)="loginAsDemo('vendor')" class="demo-btn">
-              <i class="fas fa-store"></i>
-              <div class="demo-info">
-                <strong>Vendor Demo</strong>
-                <small>raj&#64;example.com / password123</small>
-              </div>
-            </button>
-            <button (click)="loginAsDemo('admin')" class="demo-btn">
-              <i class="fas fa-shield-alt"></i>
-              <div class="demo-info">
-                <strong>Admin Demo</strong>
-                <small>admin&#64;dfashion.com / admin123</small>
-              </div>
-            </button>
-          </div>
-          <div class="backend-status">
-            <p><i class="fas fa-info-circle"></i> Backend not running - using demo mode</p>
-          </div>
-        </div>
+
 
         <!-- Register Link -->
         <div class="auth-link">
@@ -187,93 +171,46 @@ import { NotificationService } from '../../../../core/services/notification.serv
       cursor: not-allowed;
     }
 
-    .demo-accounts {
-      margin-bottom: 24px;
-      padding: 20px;
-      background: #f8fafc;
-      border-radius: 8px;
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
     }
 
-    .demo-accounts h4 {
-      font-size: 14px;
+    .login-header h3 {
+      font-size: 24px;
       font-weight: 600;
       margin-bottom: 8px;
-      text-align: center;
-      color: #64748b;
+      color: #262626;
     }
 
-    .demo-note {
-      font-size: 12px;
+    .login-header p {
       color: #8e8e8e;
-      text-align: center;
-      margin-bottom: 12px;
+      font-size: 14px;
     }
 
-    .demo-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .demo-btn {
+    .remember-me {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
+      margin-bottom: 24px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
       cursor: pointer;
-      transition: all 0.2s;
-      text-align: left;
-    }
-
-    .demo-btn:hover {
-      background: #f1f5f9;
-      border-color: var(--primary-color);
-      transform: translateY(-1px);
-    }
-
-    .demo-btn i {
-      font-size: 16px;
-      color: var(--primary-color);
-      min-width: 16px;
-    }
-
-    .demo-info {
-      flex: 1;
-    }
-
-    .demo-info strong {
-      display: block;
-      font-size: 13px;
+      font-size: 14px;
       color: #262626;
-      margin-bottom: 2px;
     }
 
-    .demo-info small {
-      font-size: 11px;
-      color: #8e8e8e;
-      font-family: monospace;
+    .checkbox-label input[type="checkbox"] {
+      margin-right: 8px;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary-color);
     }
 
-    .backend-status {
-      padding: 8px;
-      background: #fef3c7;
-      border: 1px solid #f59e0b;
-      border-radius: 6px;
-      text-align: center;
-    }
-
-    .backend-status p {
-      font-size: 11px;
-      color: #92400e;
-      margin: 0;
-    }
-
-    .backend-status i {
-      margin-right: 4px;
+    .checkmark {
+      margin-right: 8px;
     }
 
     .auth-link {
@@ -319,45 +256,53 @@ export class LoginComponent {
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      rememberMe: [false]
     });
   }
+
+
 
   onSubmit() {
     if (this.loginForm.valid) {
       this.loading = true;
       this.errorMessage = '';
 
-      this.authService.login(this.loginForm.value).subscribe({
+      // Trim whitespace from form values
+      const formData = {
+        ...this.loginForm.value,
+        email: this.loginForm.value.email?.trim(),
+        password: this.loginForm.value.password?.trim()
+      };
+
+      this.authService.login(formData).subscribe({
         next: (response) => {
           this.loading = false;
           this.notificationService.success(
             'Login Successful!',
             `Welcome back, ${response.user.fullName}!`
           );
-          this.router.navigate(['/home']);
+
+          // Role-based redirect
+          if (response.user.role === 'admin') {
+            this.router.navigate(['/admin']);
+          } else if (response.user.role === 'vendor') {
+            this.router.navigate(['/vendor/dashboard']);
+          } else {
+            this.router.navigate(['/home']);
+          }
         },
         error: (error) => {
           this.loading = false;
-          this.errorMessage = error.error?.message || 'Invalid credentials. Try demo accounts below.';
+          this.errorMessage = error.error?.message || 'Invalid credentials. Please check your email and password.';
           this.notificationService.error(
             'Login Failed',
-            'Please check your credentials or use demo accounts below.'
+            'Please check your credentials and try again.'
           );
         }
       });
     }
   }
 
-  loginAsDemo(role: 'customer' | 'vendor' | 'admin') {
-    const demoCredentials = {
-      customer: { email: 'maya@example.com', password: 'password123' },
-      vendor: { email: 'raj@example.com', password: 'password123' },
-      admin: { email: 'admin@dfashion.com', password: 'admin123' }
-    };
 
-    const credentials = demoCredentials[role];
-    this.loginForm.patchValue(credentials);
-    this.onSubmit();
-  }
 }

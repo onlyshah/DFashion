@@ -40,7 +40,11 @@ router.get('/', optionalAuth, async (req, res) => {
 
     const result = Object.values(groupedStories);
 
-    res.json({ storyGroups: result });
+    res.json({
+      success: true,
+      stories: stories,
+      storyGroups: result
+    });
   } catch (error) {
     console.error('Get stories error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -61,7 +65,10 @@ router.get('/user/:userId', optionalAuth, async (req, res) => {
     .populate('products.product', 'name price images brand')
     .sort({ createdAt: -1 });
 
-    res.json({ stories });
+    res.json({
+      success: true,
+      stories: stories
+    });
   } catch (error) {
     console.error('Get user stories error:', error);
     res.status(500).json({ message: 'Server error' });

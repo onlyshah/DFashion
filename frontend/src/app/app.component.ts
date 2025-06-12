@@ -55,13 +55,34 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Hide header on auth pages
+    // Hide header on auth pages and admin login
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event) => {
         const navigationEnd = event as NavigationEnd;
-        this.showHeader = !navigationEnd.url.includes('/auth');
+        const url = navigationEnd.url;
+
+        // Hide header on auth pages, admin login, stories, and post details for full-screen experience
+        const shouldHideHeader = url.includes('/auth') ||
+                                url.includes('/admin/login') ||
+                                url.includes('/admin/auth') ||
+                                url.startsWith('/admin/login') ||
+                                url.startsWith('/stories') ||
+                                url.startsWith('/post/');
+
+        this.showHeader = !shouldHideHeader;
       });
+
+    // Set initial header visibility
+    const currentUrl = this.router.url;
+    const shouldHideHeader = currentUrl.includes('/auth') ||
+                            currentUrl.includes('/admin/login') ||
+                            currentUrl.includes('/admin/auth') ||
+                            currentUrl.startsWith('/admin/login') ||
+                            currentUrl.startsWith('/stories') ||
+                            currentUrl.startsWith('/post/');
+
+    this.showHeader = !shouldHideHeader;
 
     // Initialize auth state
     this.authService.initializeAuth();

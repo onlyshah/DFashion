@@ -8,11 +8,10 @@ import { NotificationService, Notification } from '../../../core/services/notifi
   imports: [CommonModule],
   template: `
     <div class="notifications-container">
-      <div 
-        *ngFor="let notification of notifications" 
+      <div
+        *ngFor="let notification of notifications"
         class="notification"
         [class]="'notification-' + notification.type"
-        [@slideIn]
       >
         <div class="notification-content">
           <div class="notification-header">

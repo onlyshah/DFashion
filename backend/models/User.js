@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['customer', 'vendor', 'admin', 'sales', 'marketing', 'accounting', 'support', 'manager'],
+    enum: ['customer', 'super_admin'],
     default: 'customer'
   },
   permissions: [{
@@ -141,7 +141,37 @@ const userSchema = new mongoose.Schema({
       type: Number,
       default: 0
     }
-  }
+  },
+  cart: [{
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1
+    },
+    size: String,
+    color: String,
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  wishlist: [{
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, {
   timestamps: true
 });

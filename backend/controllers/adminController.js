@@ -1,47 +1,12 @@
-// Import models with fallback for missing dependencies
-let User, Product, Order, Role, bcrypt, jwt;
+// Import models - no fallbacks, require database
+const User = require('../models/User');
+const Product = require('../models/Product');
+const Order = require('../models/Order');
+const Role = require('../models/Role');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-try {
-  User = require('../models/User');
-} catch (error) {
-  console.log('User model not found, using mock data');
-  User = { find: () => ({ select: () => ({ sort: () => ({ limit: () => ({ skip: () => [] }) }) }) }), countDocuments: () => 0, findById: () => null, findOne: () => null };
-}
 
-try {
-  Product = require('../models/Product');
-} catch (error) {
-  console.log('Product model not found, using mock data');
-  Product = { find: () => ({ populate: () => ({ sort: () => ({ limit: () => ({ skip: () => [] }) }) }) }), countDocuments: () => 0 };
-}
-
-try {
-  Order = require('../models/Order');
-} catch (error) {
-  console.log('Order model not found, using mock data');
-  Order = { find: () => ({ populate: () => ({ sort: () => ({ limit: () => ({ skip: () => [] }) }) }) }), countDocuments: () => 0 };
-}
-
-try {
-  Role = require('../models/Role');
-} catch (error) {
-  console.log('Role model not found, using mock data');
-  Role = { find: () => [] };
-}
-
-try {
-  bcrypt = require('bcryptjs');
-} catch (error) {
-  console.log('bcryptjs not found, using simple password comparison');
-  bcrypt = { hash: (pwd) => pwd, compare: (a, b) => a === b };
-}
-
-try {
-  jwt = require('jsonwebtoken');
-} catch (error) {
-  console.log('jsonwebtoken not found, using simple token generation');
-  jwt = { sign: () => 'demo-token-' + Date.now(), verify: () => ({ userId: '1' }) };
-}
 
 // Role-based permission definitions
 const ROLE_PERMISSIONS = {
@@ -146,63 +111,32 @@ exports.getDashboardStats = async (req, res) => {
       createdAt: { $gte: startOfDay }
     });
 
-    // Order Statistics (Mock data for now)
-    const totalOrders = 1250;
-    const ordersToday = 45;
-    const ordersThisMonth = 890;
-    const totalRevenue = 2450000;
-    const revenueToday = 125000;
-    const revenueThisMonth = 1850000;
+    // Order Statistics - from database
+    const totalOrders = await Order.countDocuments();
+    const ordersToday = await Order.countDocuments({
+      createdAt: { $gte: startOfDay }
+    });
+    const ordersThisMonth = await Order.countDocuments({
+      createdAt: { $gte: startOfMonth }
+    });
 
-    // Department Performance
-    const departmentStats = {
-      sales: {
-        team_size: 8,
-        active_leads: 156,
-        conversions_today: 12,
-        target_achievement: 85.5
-      },
-      marketing: {
-        team_size: 5,
-        campaigns_active: 7,
-        reach_today: 25000,
-        engagement_rate: 4.2
-      },
-      support: {
-        team_size: 6,
-        tickets_open: 23,
-        tickets_resolved_today: 18,
-        satisfaction_rate: 94.5
-      },
-      accounting: {
-        team_size: 3,
-        pending_invoices: 45,
-        processed_today: 67,
-        outstanding_amount: 450000
-      }
-    };
+    // Revenue calculation from orders
+    const revenueAggregation = await Order.aggregate([
+      { $group: { _id: null, total: { $sum: '$total' } } }
+    ]);
+    const totalRevenue = revenueAggregation[0]?.total || 0;
 
-    // Recent Activities
-    const recentActivities = [
-      {
-        type: 'user_registration',
-        message: 'New customer registered: Priya Sharma',
-        timestamp: new Date(Date.now() - 30 * 60 * 1000),
-        user: 'System'
-      },
-      {
-        type: 'product_approval',
-        message: 'Product approved: Summer Collection Dress',
-        timestamp: new Date(Date.now() - 45 * 60 * 1000),
-        user: req.user.fullName
-      },
-      {
-        type: 'order_placed',
-        message: 'High-value order placed: ₹25,000',
-        timestamp: new Date(Date.now() - 60 * 60 * 1000),
-        user: 'System'
-      }
-    ];
+    const revenueTodayAgg = await Order.aggregate([
+      { $match: { createdAt: { $gte: startOfDay } } },
+      { $group: { _id: null, total: { $sum: '$total' } } }
+    ]);
+    const revenueToday = revenueTodayAgg[0]?.total || 0;
+
+    const revenueThisMonthAgg = await Order.aggregate([
+      { $match: { createdAt: { $gte: startOfMonth } } },
+      { $group: { _id: null, total: { $sum: '$total' } } }
+    ]);
+    const revenueThisMonth = revenueThisMonthAgg[0]?.total || 0;
 
     res.json({
       success: true,
@@ -231,8 +165,6 @@ exports.getDashboardStats = async (req, res) => {
             this_month: revenueThisMonth
           }
         },
-        departments: departmentStats,
-        recent_activities: recentActivities,
         user_permissions: req.user.permissions || []
       }
     });
@@ -401,31 +333,49 @@ exports.updateUserRole = async (req, res) => {
 exports.getAnalytics = async (req, res) => {
   try {
     const { period = '7d', department } = req.query;
-    
-    // Mock analytics data
-    const analyticsData = {
-      sales: {
-        revenue: [120000, 135000, 128000, 142000, 155000, 148000, 162000],
-        orders: [45, 52, 48, 58, 62, 55, 68],
-        conversion_rate: [2.4, 2.8, 2.6, 3.1, 3.3, 2.9, 3.5]
+
+    // Calculate date range based on period
+    const endDate = new Date();
+    const startDate = new Date();
+
+    switch (period) {
+      case '7d':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case '30d':
+        startDate.setDate(endDate.getDate() - 30);
+        break;
+      case '90d':
+        startDate.setDate(endDate.getDate() - 90);
+        break;
+      default:
+        startDate.setDate(endDate.getDate() - 7);
+    }
+
+    // Get real analytics from database
+    const orderAnalytics = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
       },
-      marketing: {
-        reach: [15000, 18000, 16500, 22000, 25000, 21000, 28000],
-        engagement: [4.2, 4.8, 4.5, 5.1, 5.3, 4.9, 5.6],
-        cost_per_acquisition: [450, 420, 435, 380, 365, 395, 340]
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: "$total" },
+          orders: { $sum: 1 }
+        }
       },
-      support: {
-        tickets: [23, 28, 25, 31, 29, 26, 33],
-        resolution_time: [4.2, 3.8, 4.1, 3.5, 3.2, 3.7, 3.1],
-        satisfaction: [94.5, 95.2, 94.8, 96.1, 95.8, 95.5, 96.3]
-      }
-    };
+      { $sort: { _id: 1 } }
+    ]);
 
     res.json({
       success: true,
       data: {
         period,
-        analytics: department ? analyticsData[department] : analyticsData
+        analytics: {
+          sales: orderAnalytics
+        }
       }
     });
   } catch (error) {
@@ -482,25 +432,19 @@ exports.getAllOrders = async (req, res) => {
   try {
     const { page = 1, limit = 20, status } = req.query;
 
-    // Mock orders data
-    const orders = [
-      {
-        id: 'ORD001',
-        customer: 'Maya Sharma',
-        products: ['Floral Maxi Dress', 'Summer Top'],
-        total: 3799,
-        status: 'delivered',
-        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-      },
-      {
-        id: 'ORD002',
-        customer: 'Raj Patel',
-        products: ['Classic White Shirt'],
-        total: 1899,
-        status: 'processing',
-        date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-      }
-    ];
+    let query = {};
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    const orders = await Order.find(query)
+      .populate('customer', 'fullName email')
+      .populate('items.product', 'name price')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Order.countDocuments(query);
 
     res.json({
       success: true,
@@ -508,8 +452,8 @@ exports.getAllOrders = async (req, res) => {
         orders,
         pagination: {
           current: parseInt(page),
-          pages: 1,
-          total: orders.length
+          pages: Math.ceil(total / limit),
+          total
         }
       }
     });

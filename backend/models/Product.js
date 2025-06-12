@@ -142,7 +142,39 @@ const productSchema = new mongoose.Schema({
       type: Number,
       default: 0
     }
-  }
+  },
+  // Social features
+  likes: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    likedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  shares: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    sharedAt: {
+      type: Date,
+      default: Date.now
+    },
+    platform: {
+      type: String,
+      enum: ['facebook', 'twitter', 'instagram', 'whatsapp', 'email', 'copy_link'],
+      default: 'copy_link'
+    },
+    message: {
+      type: String,
+      maxlength: 500
+    }
+  }]
 }, {
   timestamps: true
 });

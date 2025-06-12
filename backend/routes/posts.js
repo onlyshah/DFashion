@@ -25,6 +25,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const total = await Post.countDocuments({ isActive: true, visibility: 'public' });
 
     res.json({
+      success: true,
       posts,
       pagination: {
         current: page,
@@ -35,6 +36,41 @@ router.get('/', optionalAuth, async (req, res) => {
   } catch (error) {
     console.error('Get posts error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/posts/:id
+// @desc    Get single post by ID
+// @access  Public
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const post = await Post.findById(id)
+      .populate('user', 'username fullName avatar vendorInfo.businessName')
+      .populate('products.product', 'name price originalPrice images brand category')
+      .populate('likes.user', 'username fullName avatar')
+      .populate('comments.user', 'username fullName avatar')
+      .populate('saves.user', 'username fullName avatar');
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      post: post
+    });
+  } catch (error) {
+    console.error('Get post error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch post',
+      error: error.message
+    });
   }
 });
 
