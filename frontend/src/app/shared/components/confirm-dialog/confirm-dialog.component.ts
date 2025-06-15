@@ -11,22 +11,7 @@ export interface ConfirmDialogData {
 
 @Component({
   selector: 'app-confirm-dialog',
-  template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
-    <mat-dialog-content>
-      <p>{{ data.message }}</p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="onCancel()">
-        {{ data.cancelText || 'Cancel' }}
-      </button>
-      <button mat-raised-button 
-              [color]="getButtonColor()" 
-              (click)="onConfirm()">
-        {{ data.confirmText || 'Confirm' }}
-      </button>
-    </mat-dialog-actions>
-  `,
+  templateUrl: './confirm-dialog.component.html',
   styleUrls: ['./confirm-dialog.component.scss']
 })
 export class ConfirmDialogComponent {

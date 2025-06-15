@@ -1,0 +1,70 @@
+<div class="stories-section">
+  <div class="stories-slider-wrapper">
+    <!-- Navigation Dots (Mobile) -->
+    <div class="nav-dots" *ngIf="showDots">
+      <button 
+        *ngFor="let dot of dots; let i = index"
+        class="nav-dot"
+        [class.active]="i === currentSlide"
+        (click)="goToSlide(i)">
+      </button>
+    </div>
+
+    <!-- Stories Slider Container -->
+    <div class="stories-slider" 
+         #storiesSlider
+         (touchstart)="onTouchStart($event)"
+         (touchmove)="onTouchMove($event)"
+         (touchend)="onTouchEnd($event)"
+         (scroll)="onScroll()">
+      
+      <!-- Stories Track -->
+      <div class="stories-track" 
+           [style.transform]="'translateX(' + translateX + 'px)'"
+           [style.transition]="isTransitioning ? 'transform 0.3s ease-out' : 'none'">
+        
+        <!-- Add Story -->
+        <div class="story-slide add-story" (click)="openAddStory()">
+          <div class="story-avatar">
+            <div class="avatar-ring add-ring">
+              <i class="fas fa-plus"></i>
+            </div>
+          </div>
+          <span class="story-username">Your Story</span>
+        </div>
+
+        <!-- User Stories -->
+        <div 
+          *ngFor="let storyGroup of storyGroups; let i = index"
+          class="story-slide"
+          (click)="openStoryViewer(storyGroup)"
+        >
+          <div class="story-avatar">
+            <div class="avatar-ring" [class.has-story]="storyGroup.stories.length > 0">
+              <img [src]="getSafeImageUrl(storyGroup.user.avatar)"
+                   [alt]="storyGroup.user.fullName"
+                   (error)="onImageError($event)"
+                   class="avatar-image">
+            </div>
+          </div>
+          <span class="story-username">{{ storyGroup.user.username }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Arrows (Desktop/Tablet) -->
+    <button class="nav-arrow nav-left"
+            (click)="slideLeft()"
+            [disabled]="!canSlideLeft"
+            *ngIf="showArrows">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+
+    <button class="nav-arrow nav-right"
+            (click)="slideRight()"
+            [disabled]="!canSlideRight"
+            *ngIf="showArrows">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+</div>

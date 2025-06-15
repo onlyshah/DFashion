@@ -69,8 +69,8 @@ import { Router } from '@angular/router';
         <div class="story-tools">
           <!-- Text Tool -->
           <div class="tool-section">
-            <button class="tool-btn" 
-                    [class.active]="activetool === 'text'"
+            <button class="tool-btn"
+                    [class.active]="activeTools === 'text'"
                     (click)="toggleTool('text')">
               <i class="fas fa-font"></i>
             </button>
@@ -78,8 +78,8 @@ import { Router } from '@angular/router';
 
           <!-- Product Tag Tool -->
           <div class="tool-section">
-            <button class="tool-btn" 
-                    [class.active]="activetool === 'product'"
+            <button class="tool-btn"
+                    [class.active]="activeTools === 'product'"
                     (click)="toggleTool('product')">
               <i class="fas fa-shopping-bag"></i>
             </button>
@@ -87,7 +87,7 @@ import { Router } from '@angular/router';
 
           <!-- Sticker Tool -->
           <div class="tool-section">
-            <button class="tool-btn" 
+            <button class="tool-btn"
                     [class.active]="activeTools === 'sticker'"
                     (click)="toggleTool('sticker')">
               <i class="fas fa-smile"></i>

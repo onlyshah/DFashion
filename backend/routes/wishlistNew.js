@@ -7,23 +7,8 @@ const { auth, requireRole } = require('../middleware/auth');
 // Get user's wishlist
 router.get('/', auth, requireRole(['customer']), async (req, res) => {
   try {
-    const wishlist = await Wishlist.findOrCreateForUser(req.user._id)
-      .populate({
-        path: 'items.product',
-        select: 'name images price originalPrice brand category isActive sizes colors vendor',
-        populate: {
-          path: 'vendor',
-          select: 'username fullName vendorInfo.businessName'
-        }
-      })
-      .populate({
-        path: 'items.likes.user',
-        select: 'username fullName avatar'
-      })
-      .populate({
-        path: 'items.comments.user',
-        select: 'username fullName avatar'
-      });
+    // findOrCreateForUser now handles population internally
+    const wishlist = await Wishlist.findOrCreateForUser(req.user._id, true);
 
     res.json({
       success: true,
@@ -54,8 +39,8 @@ router.post('/add', auth, requireRole(['customer']), async (req, res) => {
       });
     }
 
-    // Get or create wishlist
-    const wishlist = await Wishlist.findOrCreateForUser(req.user._id);
+    // Get or create wishlist (without population for adding)
+    const wishlist = await Wishlist.findOrCreateForUser(req.user._id, false);
 
     // Add item to wishlist
     wishlist.addItem({
@@ -358,8 +343,8 @@ router.post('/move-to-cart/:itemId', auth, requireRole(['customer']), async (req
       });
     }
 
-    // Get or create cart
-    const cart = await Cart.findOrCreateForUser(req.user._id);
+    // Get or create cart (without population for adding)
+    const cart = await Cart.findOrCreateForUser(req.user._id, false);
 
     // Add item to cart
     cart.addItem({

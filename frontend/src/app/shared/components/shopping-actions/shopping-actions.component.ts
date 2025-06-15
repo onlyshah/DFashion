@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { CartService } from '../../../core/services/cart.service';
 import { WishlistService } from '../../../core/services/wishlist.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -23,225 +24,10 @@ export interface Product {
   selector: 'app-shopping-actions',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="shopping-actions" [class.compact]="compact">
-      <!-- Buy Now Button -->
-      <button 
-        class="action-btn buy-btn"
-        [class.loading]="buyLoading"
-        [disabled]="!product.isActive || product.stock === 0 || buyLoading"
-        (click)="onBuyNow()"
-        [attr.aria-label]="'Buy ' + product.name"
-      >
-        <i class="fas fa-shopping-bag" *ngIf="!buyLoading"></i>
-        <i class="fas fa-spinner fa-spin" *ngIf="buyLoading"></i>
-        <span *ngIf="!compact">{{ product.stock === 0 ? 'Out of Stock' : 'Buy Now' }}</span>
-      </button>
-
-      <!-- Add to Cart Button -->
-      <button 
-        class="action-btn cart-btn"
-        [class.loading]="cartLoading"
-        [class.added]="isInCart"
-        [disabled]="!product.isActive || product.stock === 0 || cartLoading"
-        (click)="onAddToCart()"
-        [attr.aria-label]="isInCart ? 'Remove from cart' : 'Add to cart'"
-      >
-        <i class="fas fa-shopping-cart" *ngIf="!cartLoading && !isInCart"></i>
-        <i class="fas fa-check" *ngIf="!cartLoading && isInCart"></i>
-        <i class="fas fa-spinner fa-spin" *ngIf="cartLoading"></i>
-        <span *ngIf="!compact">{{ isInCart ? 'In Cart' : 'Add to Cart' }}</span>
-      </button>
-
-      <!-- Wishlist Button -->
-      <button 
-        class="action-btn wishlist-btn"
-        [class.loading]="wishlistLoading"
-        [class.added]="isInWishlist"
-        [disabled]="wishlistLoading"
-        (click)="onToggleWishlist()"
-        [attr.aria-label]="isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'"
-      >
-        <i class="fas fa-heart" *ngIf="!wishlistLoading && isInWishlist"></i>
-        <i class="far fa-heart" *ngIf="!wishlistLoading && !isInWishlist"></i>
-        <i class="fas fa-spinner fa-spin" *ngIf="wishlistLoading"></i>
-        <span *ngIf="!compact">{{ isInWishlist ? 'Saved' : 'Save' }}</span>
-      </button>
-
-      <!-- Price Display -->
-      <div class="price-display" *ngIf="showPrice">
-        <span class="current-price">₹{{ product.price | number:'1.0-0' }}</span>
-        <span class="original-price" *ngIf="product.originalPrice && product.originalPrice > product.price">
-          ₹{{ product.originalPrice | number:'1.0-0' }}
-        </span>
-        <span class="discount" *ngIf="discountPercentage > 0">
-          {{ discountPercentage }}% OFF
-        </span>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .shopping-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .shopping-actions.compact {
-      padding: 8px;
-      gap: 6px;
-    }
-
-    .action-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      min-width: 44px;
-      min-height: 44px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .shopping-actions.compact .action-btn {
-      padding: 8px 12px;
-      font-size: 12px;
-      min-width: 36px;
-      min-height: 36px;
-    }
-
-    .action-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .action-btn:not(:disabled):hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    }
-
-    .action-btn:not(:disabled):active {
-      transform: translateY(0);
-    }
-
-    .buy-btn {
-      background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-      color: white;
-    }
-
-    .buy-btn:not(:disabled):hover {
-      background: linear-gradient(135deg, #ee5a24, #ff6b6b);
-    }
-
-    .cart-btn {
-      background: linear-gradient(135deg, #4834d4, #686de0);
-      color: white;
-    }
-
-    .cart-btn.added {
-      background: linear-gradient(135deg, #00d2d3, #01a3a4);
-    }
-
-    .cart-btn:not(:disabled):hover {
-      background: linear-gradient(135deg, #686de0, #4834d4);
-    }
-
-    .cart-btn.added:not(:disabled):hover {
-      background: linear-gradient(135deg, #01a3a4, #00d2d3);
-    }
-
-    .wishlist-btn {
-      background: linear-gradient(135deg, #ff9ff3, #f368e0);
-      color: white;
-    }
-
-    .wishlist-btn.added {
-      background: linear-gradient(135deg, #ff3838, #ff6b6b);
-    }
-
-    .wishlist-btn:not(:disabled):hover {
-      background: linear-gradient(135deg, #f368e0, #ff9ff3);
-    }
-
-    .wishlist-btn.added:not(:disabled):hover {
-      background: linear-gradient(135deg, #ff6b6b, #ff3838);
-    }
-
-    .price-display {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      margin-left: auto;
-    }
-
-    .current-price {
-      font-weight: 700;
-      font-size: 16px;
-      color: #2d3436;
-    }
-
-    .original-price {
-      font-size: 12px;
-      color: #636e72;
-      text-decoration: line-through;
-      margin-top: 2px;
-    }
-
-    .discount {
-      font-size: 10px;
-      color: #00b894;
-      font-weight: 600;
-      background: rgba(0, 184, 148, 0.1);
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-top: 2px;
-    }
-
-    .loading {
-      pointer-events: none;
-    }
-
-    @media (max-width: 768px) {
-      .shopping-actions {
-        padding: 8px;
-        gap: 6px;
-      }
-
-      .action-btn {
-        padding: 8px 12px;
-        font-size: 12px;
-        min-width: 36px;
-        min-height: 36px;
-      }
-
-      .action-btn span {
-        display: none;
-      }
-
-      .price-display {
-        margin-left: 8px;
-      }
-
-      .current-price {
-        font-size: 14px;
-      }
-    }
-  `]
+  templateUrl: './shopping-actions.component.html',
+  styleUrls: ['./shopping-actions.component.scss']
 })
-export class ShoppingActionsComponent implements OnInit {
+export class ShoppingActionsComponent implements OnInit, OnDestroy {
   @Input() product!: Product;
   @Input() compact = false;
   @Input() showPrice = true;
@@ -254,6 +40,14 @@ export class ShoppingActionsComponent implements OnInit {
   isInCart = false;
   isInWishlist = false;
 
+  // Total count properties
+  cartCount = 0;
+  wishlistCount = 0;
+  totalCount = 0;
+
+  // Subscription management
+  private subscriptions: Subscription[] = [];
+
   constructor(
     private cartService: CartService,
     private wishlistService: WishlistService,
@@ -265,6 +59,14 @@ export class ShoppingActionsComponent implements OnInit {
   ngOnInit() {
     this.checkCartStatus();
     this.checkWishlistStatus();
+    this.initializeCounts();
+    this.subscribeToAuthChanges();
+  }
+
+  ngOnDestroy() {
+    // Clean up all subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
   }
 
   get discountPercentage(): number {
@@ -274,14 +76,202 @@ export class ShoppingActionsComponent implements OnInit {
     return 0;
   }
 
-  private checkCartStatus() {
-    // TODO: Implement cart status check when service is ready
+  // Initialize count subscriptions
+  private initializeCounts() {
+    // Clear existing subscriptions to prevent duplicates
+    this.clearCountSubscriptions();
+
+    if (this.authService.isAuthenticated) {
+      console.log('🔢 Initializing counts for authenticated user');
+
+      // Subscribe to cart count changes with error handling
+      const cartSub = this.cartService.cartItemCount$.subscribe({
+        next: (count: number) => {
+          this.cartCount = count || 0;
+          this.updateTotalCount();
+          console.log('🛒 Cart count updated:', this.cartCount);
+        },
+        error: (error) => {
+          console.error('❌ Error subscribing to cart count:', error);
+          this.cartCount = 0;
+          this.updateTotalCount();
+        }
+      });
+      this.subscriptions.push(cartSub);
+
+      // Subscribe to wishlist count changes with error handling
+      const wishlistSub = this.wishlistService.wishlistCount$.subscribe({
+        next: (count: number) => {
+          this.wishlistCount = count || 0;
+          this.updateTotalCount();
+          console.log('❤️ Wishlist count updated:', this.wishlistCount);
+        },
+        error: (error) => {
+          console.error('❌ Error subscribing to wishlist count:', error);
+          this.wishlistCount = 0;
+          this.updateTotalCount();
+        }
+      });
+      this.subscriptions.push(wishlistSub);
+
+      // Load initial counts
+      this.loadInitialCounts();
+    } else {
+      console.log('🔢 User not authenticated, setting counts to 0');
+      // User not authenticated, set counts to 0
+      this.cartCount = 0;
+      this.wishlistCount = 0;
+      this.updateTotalCount();
+    }
+  }
+
+  // Load initial counts from services
+  private loadInitialCounts() {
+    try {
+      // Get current cart count
+      this.cartService.refreshCartCount();
+
+      // Trigger wishlist count refresh by subscribing to wishlist items
+      this.wishlistService.wishlistItems$.pipe().subscribe();
+    } catch (error) {
+      console.error('❌ Error loading initial counts:', error);
+    }
+  }
+
+  // Clear count-related subscriptions
+  private clearCountSubscriptions() {
+    // Only clear count-related subscriptions, keep auth subscription
+    const authSub = this.subscriptions.find(sub =>
+      sub.constructor.name === 'AuthSubscription' // This is a conceptual check
+    );
+
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = authSub ? [authSub] : [];
+  }
+
+  // Calculate total count with safety checks
+  private updateTotalCount() {
+    // Ensure counts are valid numbers
+    const safeCartCount = Number.isInteger(this.cartCount) && this.cartCount >= 0 ? this.cartCount : 0;
+    const safeWishlistCount = Number.isInteger(this.wishlistCount) && this.wishlistCount >= 0 ? this.wishlistCount : 0;
+
+    this.cartCount = safeCartCount;
+    this.wishlistCount = safeWishlistCount;
+    this.totalCount = safeCartCount + safeWishlistCount;
+
+    console.log('🔢 Total count updated:', {
+      cart: this.cartCount,
+      wishlist: this.wishlistCount,
+      total: this.totalCount,
+      authenticated: this.authService.isAuthenticated,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Get total count (public method for template) - always returns valid number
+  getTotalCount(): number {
+    if (!this.authService.isAuthenticated) {
+      return 0;
+    }
+    return Number.isInteger(this.totalCount) && this.totalCount >= 0 ? this.totalCount : 0;
+  }
+
+  // Get cart count (public method for template) - always returns valid number
+  getCartCount(): number {
+    if (!this.authService.isAuthenticated) {
+      return 0;
+    }
+    return Number.isInteger(this.cartCount) && this.cartCount >= 0 ? this.cartCount : 0;
+  }
+
+  // Get wishlist count (public method for template) - always returns valid number
+  getWishlistCount(): number {
+    if (!this.authService.isAuthenticated) {
+      return 0;
+    }
+    return Number.isInteger(this.wishlistCount) && this.wishlistCount >= 0 ? this.wishlistCount : 0;
+  }
+
+  // Check if user has any items
+  hasItems(): boolean {
+    return this.authService.isAuthenticated && this.getTotalCount() > 0;
+  }
+
+  // Get formatted count display
+  getFormattedTotalCount(): string {
+    const count = this.getTotalCount();
+    if (count === 0) {
+      return '0';
+    } else if (count > 99) {
+      return '99+';
+    }
+    return count.toString();
+  }
+
+  // Get count breakdown for display
+  getCountBreakdown(): { cart: number; wishlist: number; total: number } {
+    return {
+      cart: this.getCartCount(),
+      wishlist: this.getWishlistCount(),
+      total: this.getTotalCount()
+    };
+  }
+
+  // Subscribe to authentication state changes
+  private subscribeToAuthChanges() {
+    // Re-initialize counts when authentication state changes
+    const authSub = this.authService.isAuthenticated$.subscribe({
+      next: (isAuthenticated: boolean) => {
+        console.log('🔐 Auth state changed:', isAuthenticated);
+
+        if (isAuthenticated) {
+          // User logged in - initialize counts and status
+          console.log('🔐 User logged in, initializing counts...');
+          this.initializeCounts();
+          this.checkCartStatus();
+          this.checkWishlistStatus();
+        } else {
+          // User logged out - reset everything
+          console.log('🔐 User logged out, resetting counts...');
+          this.resetAllCounts();
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error in auth state subscription:', error);
+        this.resetAllCounts();
+      }
+    });
+    this.subscriptions.push(authSub);
+  }
+
+  // Reset all counts and status
+  private resetAllCounts() {
+    this.cartCount = 0;
+    this.wishlistCount = 0;
+    this.totalCount = 0;
     this.isInCart = false;
+    this.isInWishlist = false;
+    this.updateTotalCount();
+    console.log('🔄 All counts reset to 0');
+  }
+
+  private checkCartStatus() {
+    if (this.authService.isAuthenticated) {
+      this.isInCart = this.cartService.isInCart(this.product._id);
+    } else {
+      this.isInCart = false;
+    }
   }
 
   private checkWishlistStatus() {
-    // TODO: Implement wishlist status check when service is ready
-    this.isInWishlist = false;
+    if (this.authService.isAuthenticated) {
+      // Subscribe to wishlist changes to check if product is in wishlist
+      this.wishlistService.wishlistItems$.subscribe(items => {
+        this.isInWishlist = items.some(item => item.product._id === this.product._id);
+      });
+    } else {
+      this.isInWishlist = false;
+    }
   }
 
   onBuyNow() {
@@ -310,17 +300,27 @@ export class ShoppingActionsComponent implements OnInit {
 
     this.cartLoading = true;
 
-    // Simulate cart action
-    setTimeout(() => {
-      if (this.isInCart) {
-        this.isInCart = false;
-        alert('Removed from cart');
-      } else {
-        this.isInCart = true;
-        alert('Added to cart');
-      }
+    if (this.isInCart) {
+      // If already in cart, navigate to cart page
+      this.router.navigate(['/cart']);
       this.cartLoading = false;
-    }, 1000);
+    } else {
+      // Add to cart
+      this.cartService.addToCart(this.product._id, 1).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.isInCart = true;
+            alert('Added to cart successfully!');
+          }
+          this.cartLoading = false;
+        },
+        error: (error) => {
+          console.error('Error adding to cart:', error);
+          alert('Failed to add to cart. Please try again.');
+          this.cartLoading = false;
+        }
+      });
+    }
   }
 
   onToggleWishlist() {
@@ -332,16 +332,38 @@ export class ShoppingActionsComponent implements OnInit {
 
     this.wishlistLoading = true;
 
-    // Simulate wishlist action
-    setTimeout(() => {
-      if (this.isInWishlist) {
-        this.isInWishlist = false;
-        alert('Removed from wishlist');
-      } else {
-        this.isInWishlist = true;
-        alert('Added to wishlist');
-      }
-      this.wishlistLoading = false;
-    }, 1000);
+    if (this.isInWishlist) {
+      // Remove from wishlist
+      this.wishlistService.removeFromWishlist(this.product._id).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.isInWishlist = false;
+            alert('Removed from wishlist');
+          }
+          this.wishlistLoading = false;
+        },
+        error: (error) => {
+          console.error('Error removing from wishlist:', error);
+          alert('Failed to remove from wishlist. Please try again.');
+          this.wishlistLoading = false;
+        }
+      });
+    } else {
+      // Add to wishlist
+      this.wishlistService.addToWishlist(this.product._id).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.isInWishlist = true;
+            alert('Added to wishlist');
+          }
+          this.wishlistLoading = false;
+        },
+        error: (error) => {
+          console.error('Error adding to wishlist:', error);
+          alert('Failed to add to wishlist. Please try again.');
+          this.wishlistLoading = false;
+        }
+      });
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { StorageService } from './storage.service';
 import { ToastController } from '@ionic/angular';
@@ -38,6 +39,8 @@ export class CartService {
   private cartItems = new BehaviorSubject<CartItem[]>([]);
   private cartSummary = new BehaviorSubject<CartSummary | null>(null);
   private cartItemCount = new BehaviorSubject<number>(0);
+  private isLoadingCart = false;
+  private useLocalStorageOnly = false; // Temporary flag to disable API calls
 
   public cartItems$ = this.cartItems.asObservable();
   public cartSummary$ = this.cartSummary.asObservable();
@@ -52,34 +55,110 @@ export class CartService {
   }
 
   // Get cart from API
-  getCart(): Observable<{ success: boolean; data: { items: CartItem[]; summary: CartSummary } }> {
-    return this.http.get<{ success: boolean; data: { items: CartItem[]; summary: CartSummary } }>(`${this.API_URL}/cart`);
+  getCart(): Observable<{ success: boolean; cart: any; summary: any }> {
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+    return this.http.get<{ success: boolean; cart: any; summary: any }>(`${this.API_URL}/cart-new`, options);
+  }
+
+  // Get cart count only (lightweight endpoint)
+  getCartCount(): Observable<{ success: boolean; count: number; totalItems: number; itemCount: number }> {
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+    return this.http.get<{ success: boolean; count: number; totalItems: number; itemCount: number }>(`${this.API_URL}/cart-new/count`, options);
   }
 
   // Load cart and update local state
   loadCart() {
-    // Always try local storage first for guest shopping
-    this.loadCartFromStorage();
+    // Temporary: Use local storage only to avoid API errors
+    if (this.useLocalStorageOnly) {
+      console.log('🔄 Using local storage only (API disabled)...');
+      this.loadCartFromStorage();
+      return;
+    }
 
-    // Also try to sync with API if user is logged in
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+
+    if (token) {
+      // User is logged in - try API first, fallback to local storage
+      console.log('🔄 User authenticated, attempting to load cart from API...');
+      this.loadCartFromAPI();
+    } else {
+      // Guest user - load from local storage
+      console.log('🔄 Guest user, loading cart from local storage...');
+      this.loadCartFromStorage();
+    }
+  }
+
+  // Load cart from API for logged-in users
+  private loadCartFromAPI() {
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('❌ No authentication token, using local storage fallback');
+      this.loadCartFromStorage();
+      return;
+    }
+
+    // Prevent multiple simultaneous API calls
+    if (this.isLoadingCart) {
+      console.log('🔄 Cart already loading, skipping duplicate request');
+      return;
+    }
+
+    this.isLoadingCart = true;
+
     this.getCart().subscribe({
       next: (response) => {
-        // Only update if API has more recent data
-        if (response.data.items && response.data.items.length > 0) {
-          this.cartItems.next(response.data.items);
-          this.cartSummary.next(response.data.summary);
+        this.isLoadingCart = false;
+        if (response.success && response.cart) {
+          this.cartItems.next(response.cart.items || []);
+          this.cartSummary.next(response.summary);
+          this.updateCartCount();
+          console.log('✅ Cart loaded from API:', response.cart.items?.length || 0, 'items');
+        } else {
+          // No cart data from API, initialize empty cart
+          this.cartItems.next([]);
+          this.cartSummary.next(null);
           this.updateCartCount();
         }
       },
       error: (error) => {
-        console.log('API cart not available, using local storage');
-        // Already loaded from storage above
+        this.isLoadingCart = false;
+        console.error('❌ API cart error:', error);
+
+        if (error.status === 401) {
+          console.log('❌ Authentication failed, clearing token');
+          localStorage.removeItem('token');
+          this.cartItems.next([]);
+          this.cartSummary.next(null);
+          this.updateCartCount();
+        } else if (error.status === 500) {
+          console.log('❌ Server error, using local storage fallback');
+          this.loadCartFromStorage();
+        } else {
+          console.log('❌ API error, using local storage fallback');
+          this.loadCartFromStorage();
+        }
       }
     });
   }
 
   private async loadCartFromStorage() {
     try {
+      // Check if storage service is available
+      if (!this.storageService) {
+        console.log('Storage service not available, using empty cart');
+        this.cartItems.next([]);
+        this.updateCartCount();
+        return;
+      }
+
       // Wait a bit for storage to initialize
       await new Promise(resolve => setTimeout(resolve, 100));
       const cart = await this.storageService.getCart();
@@ -94,6 +173,10 @@ export class CartService {
 
   private async saveCartToStorage() {
     try {
+      if (!this.storageService) {
+        console.log('Storage service not available, skipping cart save');
+        return;
+      }
       await this.storageService.setCart(this.cartItems.value);
     } catch (error) {
       console.error('Error saving cart to storage:', error);
@@ -104,12 +187,73 @@ export class CartService {
     const items = this.cartItems.value || [];
     const count = items.reduce((total, item) => total + item.quantity, 0);
     this.cartItemCount.next(count);
+    console.log('🛒 Cart count updated:', count);
+  }
+
+  // Method to refresh cart on user login
+  refreshCartOnLogin() {
+    console.log('🔄 Refreshing cart on login...');
+    this.loadCartFromAPI();
+  }
+
+  // Method to refresh only cart count (lightweight)
+  refreshCartCount() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.getCartCount().subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.cartItemCount.next(response.count);
+            console.log('🛒 Cart count refreshed:', response.count);
+          }
+        },
+        error: (error) => {
+          console.error('❌ Error refreshing cart count:', error);
+          if (error.status === 401) {
+            console.log('❌ Authentication failed, clearing token');
+            localStorage.removeItem('token');
+            this.cartItemCount.next(0);
+          }
+        }
+      });
+    } else {
+      // No token, set count to 0
+      this.cartItemCount.next(0);
+    }
+  }
+
+  // Method to clear cart on logout
+  clearCartOnLogout() {
+    console.log('🔄 Clearing cart on logout...');
+    this.cartItems.next([]);
+    this.cartSummary.next(null);
+    this.cartItemCount.next(0);
+  }
+
+  // Temporary method to enable/disable API calls
+  setUseLocalStorageOnly(useLocalOnly: boolean) {
+    this.useLocalStorageOnly = useLocalOnly;
+    console.log('🔧 Cart API calls', useLocalOnly ? 'DISABLED' : 'ENABLED');
+    if (useLocalOnly) {
+      console.log('🔧 Cart will use local storage only');
+    }
   }
 
   // Add item to cart via API
   addToCart(productId: string, quantity: number = 1, size?: string, color?: string): Observable<{ success: boolean; message: string }> {
     const payload = { productId, quantity, size, color };
-    return this.http.post<{ success: boolean; message: string }>(`${this.API_URL}/cart`, payload);
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+    return this.http.post<{ success: boolean; message: string }>(`${this.API_URL}/cart-new/add`, payload, options).pipe(
+      tap(response => {
+        if (response.success) {
+          // Immediately refresh cart to get updated count
+          this.loadCartFromAPI();
+        }
+      })
+    );
   }
 
   // Legacy method for backward compatibility - works for guest users
@@ -175,7 +319,37 @@ export class CartService {
 
   // Remove item from cart via API
   removeFromCart(itemId: string): Observable<{ success: boolean; message: string }> {
-    return this.http.delete<{ success: boolean; message: string }>(`${this.API_URL}/cart/${itemId}`);
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+    return this.http.delete<{ success: boolean; message: string }>(`${this.API_URL}/cart-new/remove/${itemId}`, options).pipe(
+      tap(response => {
+        if (response.success) {
+          // Immediately refresh cart to get updated count
+          this.loadCartFromAPI();
+        }
+      })
+    );
+  }
+
+  // Bulk remove items from cart
+  bulkRemoveFromCart(itemIds: string[]): Observable<{ success: boolean; message: string; removedCount: number }> {
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      body: { itemIds },
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {
+      body: { itemIds }
+    };
+    return this.http.delete<{ success: boolean; message: string; removedCount: number }>(`${this.API_URL}/cart-new/bulk-remove`, options).pipe(
+      tap(response => {
+        if (response.success) {
+          // Immediately refresh cart to get updated count
+          this.loadCartFromAPI();
+        }
+      })
+    );
   }
 
   // Legacy method
@@ -194,7 +368,18 @@ export class CartService {
 
   // Update cart item quantity via API
   updateCartItem(itemId: string, quantity: number): Observable<{ success: boolean; message: string }> {
-    return this.http.put<{ success: boolean; message: string }>(`${this.API_URL}/cart/${itemId}`, { quantity });
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+    return this.http.put<{ success: boolean; message: string }>(`${this.API_URL}/cart-new/update/${itemId}`, { quantity }, options).pipe(
+      tap(response => {
+        if (response.success) {
+          // Immediately refresh cart to get updated count
+          this.loadCartFromAPI();
+        }
+      })
+    );
   }
 
   // Legacy method
@@ -217,7 +402,11 @@ export class CartService {
 
   // Clear cart via API
   clearCartAPI(): Observable<{ success: boolean; message: string }> {
-    return this.http.delete<{ success: boolean; message: string }>(`${this.API_URL}/cart`);
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+    return this.http.delete<{ success: boolean; message: string }>(`${this.API_URL}/cart-new/clear`, options);
   }
 
   async clearCart(): Promise<void> {

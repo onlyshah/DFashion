@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, forwardRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap, catchError, throwError, of } from 'rxjs';
 import { Router } from '@angular/router';
@@ -45,6 +45,9 @@ export class AuthService {
           this.setToken(response.token);
           this.currentUserSubject.next(response.user);
           this.isAuthenticatedSubject.next(true);
+
+          // Trigger cart and wishlist refresh after successful login
+          this.refreshUserDataOnLogin();
         }),
         catchError(error => {
           console.error('Login error:', error);
@@ -79,6 +82,50 @@ export class AuthService {
     localStorage.removeItem('token');
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
+
+    // Clear cart and wishlist data on logout
+    this.clearUserDataOnLogout();
+  }
+
+  // Method to refresh user data (cart, wishlist) after login
+  private refreshUserDataOnLogin(): void {
+    // Use setTimeout to avoid circular dependency issues
+    setTimeout(() => {
+      try {
+        // Import services dynamically to avoid circular dependency
+        import('./cart.service').then(({ CartService }) => {
+          const cartService = new CartService(this.http, null as any, null as any);
+          cartService.refreshCartOnLogin();
+        });
+
+        import('./wishlist-new.service').then(({ WishlistNewService }) => {
+          const wishlistService = new WishlistNewService(this.http, this);
+          wishlistService.refreshWishlistOnLogin();
+        });
+      } catch (error) {
+        console.error('Error refreshing user data on login:', error);
+      }
+    }, 100);
+  }
+
+  // Method to clear user data on logout
+  private clearUserDataOnLogout(): void {
+    setTimeout(() => {
+      try {
+        // Import services dynamically to avoid circular dependency
+        import('./cart.service').then(({ CartService }) => {
+          const cartService = new CartService(this.http, null as any, null as any);
+          cartService.clearCartOnLogout();
+        });
+
+        import('./wishlist-new.service').then(({ WishlistNewService }) => {
+          const wishlistService = new WishlistNewService(this.http, this);
+          wishlistService.clearWishlistOnLogout();
+        });
+      } catch (error) {
+        console.error('Error clearing user data on logout:', error);
+      }
+    }, 100);
   }
 
   getCurrentUser(): Observable<{ user: User }> {

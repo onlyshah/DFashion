@@ -36,8 +36,12 @@ export class CartPage implements OnInit {
 
   loadCart() {
     this.isLoading = true;
-    this.cartService.getCartAPI().subscribe({
-      next: () => {
+    this.cartService.getCart().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.cartItems = response.cart?.items || [];
+          this.cartSummary = response.summary;
+        }
         this.isLoading = false;
       },
       error: (error) => {
@@ -49,10 +53,11 @@ export class CartPage implements OnInit {
 
   async updateQuantity(itemId: string, newQuantity: number) {
     if (newQuantity < 1) return;
-    
-    this.cartService.updateCartItemAPI(itemId, newQuantity).subscribe({
+
+    this.cartService.updateCartItem(itemId, newQuantity).subscribe({
       next: () => {
         this.presentToast('Quantity updated', 'success');
+        this.loadCart(); // Refresh cart
       },
       error: (error) => {
         console.error('Error updating quantity:', error);
@@ -73,9 +78,10 @@ export class CartPage implements OnInit {
         {
           text: 'Remove',
           handler: () => {
-            this.cartService.removeFromCartAPI(item._id).subscribe({
+            this.cartService.removeFromCart(item._id).subscribe({
               next: () => {
                 this.presentToast('Item removed from cart', 'success');
+                this.loadCart(); // Refresh cart
               },
               error: (error) => {
                 console.error('Error removing item:', error);
@@ -104,6 +110,7 @@ export class CartPage implements OnInit {
             this.cartService.clearCartAPI().subscribe({
               next: () => {
                 this.presentToast('Cart cleared', 'success');
+                this.loadCart(); // Refresh cart
               },
               error: (error) => {
                 console.error('Error clearing cart:', error);

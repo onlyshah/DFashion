@@ -361,12 +361,34 @@ wishlistSchema.pre('save', function(next) {
 });
 
 // Static method to find or create wishlist for user
-wishlistSchema.statics.findOrCreateForUser = async function(userId) {
+wishlistSchema.statics.findOrCreateForUser = async function(userId, shouldPopulate = true) {
   let wishlist = await this.findOne({ user: userId });
   if (!wishlist) {
     wishlist = new this({ user: userId });
     await wishlist.save();
   }
+
+  // Populate related data if requested
+  if (shouldPopulate) {
+    wishlist = await this.findById(wishlist._id)
+      .populate({
+        path: 'items.product',
+        select: 'name images price originalPrice brand category isActive sizes colors vendor',
+        populate: {
+          path: 'vendor',
+          select: 'username fullName vendorInfo.businessName'
+        }
+      })
+      .populate({
+        path: 'items.likes.user',
+        select: 'username fullName avatar'
+      })
+      .populate({
+        path: 'items.comments.user',
+        select: 'username fullName avatar'
+      });
+  }
+
   return wishlist;
 };
 

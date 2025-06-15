@@ -640,8 +640,9 @@ export class WishlistComponent implements OnInit {
     this.wishlistService.removeFromWishlist(item._id).subscribe({
       next: (response) => {
         if (response.success) {
-          this.wishlistItems = this.wishlistItems.filter(i => i._id !== item._id);
-          this.sortWishlist();
+          // Refresh the wishlist to get updated data and count
+          this.loadWishlist();
+          console.log('✅ Item removed from wishlist successfully');
         }
       },
       error: (error) => {

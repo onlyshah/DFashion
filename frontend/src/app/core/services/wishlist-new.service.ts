@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
 export interface WishlistItem {
@@ -106,6 +106,9 @@ export class WishlistNewService {
 
   public wishlist$ = this.wishlistSubject.asObservable();
   public wishlistSummary$ = this.wishlistSummarySubject.asObservable();
+  public wishlistItemCount$ = this.wishlistSummarySubject.asObservable().pipe(
+    map(summary => summary.totalItems)
+  );
 
   constructor(
     private http: HttpClient,
@@ -141,6 +144,7 @@ export class WishlistNewService {
         if (response.success) {
           this.wishlistSubject.next(response.wishlist);
           this.wishlistSummarySubject.next(response.summary);
+          console.log('💝 Wishlist loaded:', response.wishlist?.items?.length || 0, 'items');
         }
       })
     );
@@ -168,6 +172,7 @@ export class WishlistNewService {
           this.wishlistSubject.next(response.wishlist);
           this.wishlistSummarySubject.next(response.summary);
           this.showSuccessMessage(response.message);
+          console.log('💝 Item added to wishlist, count updated:', response.summary?.totalItems || 0);
         }
       })
     );
@@ -204,6 +209,7 @@ export class WishlistNewService {
           this.wishlistSubject.next(response.wishlist);
           this.wishlistSummarySubject.next(response.summary);
           this.showSuccessMessage(response.message);
+          console.log('💝 Item removed from wishlist, count updated:', response.summary?.totalItems || 0);
         }
       })
     );
@@ -338,6 +344,25 @@ export class WishlistNewService {
 
   getTotalSavings(): number {
     return this.wishlistSummarySubject.value.totalSavings;
+  }
+
+  // Method to refresh wishlist on user login
+  refreshWishlistOnLogin() {
+    console.log('🔄 Refreshing wishlist on login...');
+    this.loadWishlist().subscribe({
+      next: () => {
+        console.log('✅ Wishlist refreshed on login');
+      },
+      error: (error) => {
+        console.error('❌ Error refreshing wishlist on login:', error);
+      }
+    });
+  }
+
+  // Method to clear wishlist on logout
+  clearWishlistOnLogout() {
+    console.log('🔄 Clearing wishlist on logout...');
+    this.clearLocalWishlist();
   }
 
   private clearLocalWishlist(): void {

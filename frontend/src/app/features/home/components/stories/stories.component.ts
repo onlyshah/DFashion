@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { MediaService } from '../../../../core/services/media.service';
 
 import { StoryService } from '../../../../core/services/story.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -11,161 +12,222 @@ import { User } from '../../../../core/models/user.model';
   selector: 'app-stories',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="stories-section">
-      <div class="stories-container">
-        <!-- Add Story -->
-        <div class="story-item add-story" (click)="openAddStory()">
-          <div class="story-avatar">
-            <i class="fas fa-plus"></i>
-          </div>
-          <span>Your Story</span>
-        </div>
+  templateUrl: './stories.component.html',
+  styleUrls: ['./stories.component.scss']
 
-        <!-- User Stories -->
-        <div 
-          *ngFor="let storyGroup of storyGroups" 
-          class="story-item"
-          (click)="openStoryViewer(storyGroup)"
-        >
-          <div class="story-avatar" [class.has-story]="storyGroup.stories.length > 0">
-            <img [src]="storyGroup.user.avatar" [alt]="storyGroup.user.fullName">
-          </div>
-          <span>{{ storyGroup.user.username }}</span>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .stories-section {
-      margin-bottom: 24px;
-    }
 
-    .stories-container {
-      display: flex;
-      gap: 16px;
-      padding: 16px;
-      background: #fff;
-      border: 1px solid #dbdbdb;
-      border-radius: 8px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-
-    .stories-container::-webkit-scrollbar {
-      display: none;
-    }
-
-    .story-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 80px;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    .story-item:hover {
-      transform: scale(1.05);
-    }
-
-    .story-avatar {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: #fafafa;
-      border: 1px solid #dbdbdb;
-      padding: 2px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    .story-avatar.has-story {
-      background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
-    }
-
-    .story-avatar img {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid #fff;
-    }
-
-    .add-story .story-avatar {
-      background: #fafafa;
-      border: 1px solid #dbdbdb;
-    }
-
-    .add-story .story-avatar i {
-      color: var(--primary-color);
-      font-size: 20px;
-    }
-
-    .story-item span {
-      font-size: 12px;
-      color: #262626;
-      text-align: center;
-      max-width: 80px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    @media (max-width: 768px) {
-      .stories-container {
-        padding: 12px;
-        gap: 12px;
-      }
-
-      .story-avatar {
-        width: 56px;
-        height: 56px;
-      }
-
-      .story-avatar img {
-        width: 52px;
-        height: 52px;
-      }
-
-      .story-item {
-        min-width: 70px;
-      }
-    }
-  `]
 })
-export class StoriesComponent implements OnInit {
+export class StoriesComponent implements OnInit, AfterViewInit {
+  @ViewChild('storiesSlider') storiesSlider!: ElementRef<HTMLDivElement>;
+
   storyGroups: StoryGroup[] = [];
   currentUser: User | null = null;
+
+  // Slider properties
+  translateX = 0;
+  currentSlide = 0;
+  isTransitioning = false;
+
+  // Navigation properties
+  canSlideLeft = false;
+  canSlideRight = false;
+  showArrows = false;
+  showDots = false;
+  dots: number[] = [];
+
+  // Touch properties
+  touchStartX = 0;
+  touchCurrentX = 0;
+  isDragging = false;
+
+  // Responsive properties
+  slidesPerView = 1;
+  slideWidth = 0;
 
   constructor(
     private storyService: StoryService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private mediaService: MediaService
   ) {}
 
   ngOnInit() {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
-    
+
     this.loadStories();
+  }
+
+  ngAfterViewInit() {
+    // Initialize slider after view init
+    setTimeout(() => {
+      this.calculateResponsiveSettings();
+      this.updateSliderState();
+    }, 100);
+
+    // Add resize listener for responsive updates
+    window.addEventListener('resize', () => {
+      this.calculateResponsiveSettings();
+      this.updateSliderState();
+    });
+  }
+
+  calculateResponsiveSettings() {
+    if (!this.storiesSlider) return;
+
+    const containerWidth = this.storiesSlider.nativeElement.clientWidth;
+    const screenWidth = window.innerWidth;
+
+    // Calculate slides per view based on screen size
+    if (screenWidth >= 1024) {
+      this.slidesPerView = Math.floor(containerWidth / 90); // Desktop: 90px per slide
+      this.slideWidth = 90;
+      this.showArrows = true;
+      this.showDots = false;
+    } else if (screenWidth >= 768) {
+      this.slidesPerView = Math.floor(containerWidth / 80); // Tablet: 80px per slide
+      this.slideWidth = 80;
+      this.showArrows = true;
+      this.showDots = false;
+    } else if (screenWidth >= 481) {
+      this.slidesPerView = Math.floor(containerWidth / 70); // Mobile landscape: 70px per slide
+      this.slideWidth = 70;
+      this.showArrows = false;
+      this.showDots = true;
+    } else if (screenWidth >= 361) {
+      this.slidesPerView = Math.floor(containerWidth / 65); // Mobile portrait: 65px per slide
+      this.slideWidth = 65;
+      this.showArrows = false;
+      this.showDots = true;
+    } else {
+      this.slidesPerView = Math.floor(containerWidth / 60); // Very small: 60px per slide
+      this.slideWidth = 60;
+      this.showArrows = false;
+      this.showDots = true;
+    }
+
+    // Ensure minimum slides per view
+    this.slidesPerView = Math.max(this.slidesPerView, 3);
+
+    // Calculate dots for mobile
+    if (this.showDots) {
+      const totalSlides = this.storyGroups.length + 1; // +1 for "Add Story"
+      const totalPages = Math.ceil(totalSlides / this.slidesPerView);
+      this.dots = Array(totalPages).fill(0).map((_, i) => i);
+    }
   }
 
   loadStories() {
     this.storyService.getStories().subscribe({
       next: (response) => {
         this.storyGroups = response.storyGroups;
+        // Update slider after stories load
+        setTimeout(() => {
+          this.calculateResponsiveSettings();
+          this.updateSliderState();
+        }, 100);
       },
       error: (error) => {
         console.error('Error loading stories:', error);
         this.storyGroups = [];
       }
     });
+  }
+
+  // Slider navigation methods
+  slideLeft() {
+    if (this.canSlideLeft) {
+      this.currentSlide = Math.max(0, this.currentSlide - 1);
+      this.updateSliderPosition();
+    }
+  }
+
+  slideRight() {
+    if (this.canSlideRight) {
+      const maxSlide = this.getMaxSlide();
+      this.currentSlide = Math.min(maxSlide, this.currentSlide + 1);
+      this.updateSliderPosition();
+    }
+  }
+
+  goToSlide(slideIndex: number) {
+    this.currentSlide = slideIndex;
+    this.updateSliderPosition();
+  }
+
+  updateSliderPosition() {
+    this.isTransitioning = true;
+    this.translateX = -this.currentSlide * this.slideWidth * this.slidesPerView;
+    this.updateSliderState();
+
+    // Reset transition flag after animation
+    setTimeout(() => {
+      this.isTransitioning = false;
+    }, 300);
+  }
+
+  updateSliderState() {
+    const maxSlide = this.getMaxSlide();
+    this.canSlideLeft = this.currentSlide > 0;
+    this.canSlideRight = this.currentSlide < maxSlide;
+  }
+
+  getMaxSlide(): number {
+    const totalSlides = this.storyGroups.length + 1; // +1 for "Add Story"
+    return Math.max(0, Math.ceil(totalSlides / this.slidesPerView) - 1);
+  }
+
+  onScroll() {
+    // Handle manual scroll if needed
+    this.updateSliderState();
+  }
+
+  // Touch gesture methods
+  onTouchStart(event: TouchEvent) {
+    this.touchStartX = event.touches[0].clientX;
+    this.touchCurrentX = this.touchStartX;
+    this.isDragging = true;
+  }
+
+  onTouchMove(event: TouchEvent) {
+    if (!this.isDragging) return;
+
+    this.touchCurrentX = event.touches[0].clientX;
+    const deltaX = this.touchCurrentX - this.touchStartX;
+
+    // Prevent default scrolling
+    if (Math.abs(deltaX) > 10) {
+      event.preventDefault();
+    }
+  }
+
+  onTouchEnd(event: TouchEvent) {
+    if (!this.isDragging) return;
+
+    const deltaX = this.touchCurrentX - this.touchStartX;
+    const threshold = 50; // Minimum swipe distance
+
+    if (Math.abs(deltaX) > threshold) {
+      if (deltaX > 0) {
+        // Swipe right - go to previous slide
+        this.slideLeft();
+      } else {
+        // Swipe left - go to next slide
+        this.slideRight();
+      }
+    }
+
+    this.isDragging = false;
+  }
+
+  // Image handling methods
+  getSafeImageUrl(url: string | undefined): string {
+    return this.mediaService.getSafeImageUrl(url, 'user');
+  }
+
+  onImageError(event: Event): void {
+    this.mediaService.handleImageError(event, 'user');
   }
 
 

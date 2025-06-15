@@ -11,39 +11,8 @@ import { AuthService } from './core/services/auth.service';
   selector: 'app-root',
   standalone: true,
   imports: [CommonModule, RouterOutlet, HeaderComponent, NotificationComponent],
-  template: `
-    <div class="app-container">
-      <app-header *ngIf="showHeader"></app-header>
-      <main class="main-content" [class.with-header]="showHeader">
-        <router-outlet></router-outlet>
-      </main>
-    </div>
-
-    <!-- Notifications -->
-    <app-notification></app-notification>
-  `,
-  styles: [`
-    .app-container {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .main-content {
-      flex: 1;
-      transition: all 0.3s ease;
-    }
-
-    .main-content.with-header {
-      margin-top: 60px;
-    }
-
-    @media (max-width: 768px) {
-      .main-content.with-header {
-        margin-top: 56px;
-      }
-    }
-  `]
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
   title = 'DFashion';

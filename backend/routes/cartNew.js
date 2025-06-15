@@ -4,26 +4,121 @@ const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const { auth, requireRole } = require('../middleware/auth');
 
+// Test endpoint to check if routes are working
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Cart routes are working',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Test endpoint with auth
+router.get('/test-auth', auth, (req, res) => {
+  res.json({
+    success: true,
+    message: 'Cart auth is working',
+    user: req.user.email,
+    role: req.user.role,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Get cart count only (lightweight endpoint)
+router.get('/count', auth, requireRole(['customer']), async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ user: req.user._id, isActive: true })
+      .select('totalItems items');
+
+    if (!cart) {
+      return res.json({
+        success: true,
+        count: 0,
+        totalItems: 0,
+        itemCount: 0
+      });
+    }
+
+    // Calculate accurate counts
+    const totalItems = cart.items.reduce((total, item) => total + item.quantity, 0);
+    const itemCount = cart.items.length;
+
+    res.json({
+      success: true,
+      count: totalItems, // Total quantity of all items
+      totalItems: totalItems,
+      itemCount: itemCount, // Number of unique items
+      lastUpdated: cart.lastUpdated
+    });
+  } catch (error) {
+    console.error('Get cart count error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch cart count',
+      error: error.message
+    });
+  }
+});
+
 // Get user's cart
 router.get('/', auth, requireRole(['customer']), async (req, res) => {
   try {
-    const cart = await Cart.findOrCreateForUser(req.user._id)
-      .populate({
-        path: 'items.product',
-        select: 'name images price originalPrice brand category isActive sizes colors vendor',
-        populate: {
-          path: 'vendor',
-          select: 'username fullName vendorInfo.businessName'
-        }
-      });
+    console.log('🛒 Getting cart for user:', req.user._id);
+    console.log('🛒 User object:', req.user);
+
+    // First, try to find existing cart
+    let cart = await Cart.findOne({ user: req.user._id, isActive: true });
+    console.log('🛒 Existing cart found:', cart ? 'Yes' : 'No');
+
+    if (!cart) {
+      console.log('🛒 Creating new cart for user');
+      cart = new Cart({ user: req.user._id });
+      await cart.save();
+      console.log('🛒 New cart created:', cart._id);
+    }
+
+    // Try to populate the cart
+    try {
+      cart = await Cart.findById(cart._id)
+        .populate({
+          path: 'items.product',
+          select: 'name images price originalPrice brand category isActive sizes colors vendor',
+          populate: {
+            path: 'vendor',
+            select: 'username fullName vendorInfo.businessName'
+          }
+        });
+      console.log('🛒 Cart populated successfully');
+    } catch (populateError) {
+      console.error('❌ Populate error:', populateError);
+      // Continue without population
+    }
+
+    console.log('🛒 Cart items count:', cart?.items?.length || 0);
+
+    // Get summary safely
+    let summary;
+    try {
+      summary = cart.summary;
+      console.log('🛒 Summary generated successfully');
+    } catch (summaryError) {
+      console.error('❌ Summary error:', summaryError);
+      summary = {
+        totalItems: 0,
+        totalAmount: 0,
+        totalSavings: 0,
+        itemCount: 0
+      };
+    }
 
     res.json({
       success: true,
       cart: cart,
-      summary: cart.summary
+      summary: summary
     });
   } catch (error) {
-    console.error('Get cart error:', error);
+    console.error('❌ Get cart error:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch cart',
@@ -214,6 +309,65 @@ router.delete('/remove/:itemId', auth, requireRole(['customer']), async (req, re
   }
 });
 
+// Bulk remove items from cart
+router.delete('/bulk-remove', auth, requireRole(['customer']), async (req, res) => {
+  try {
+    const { itemIds } = req.body;
+
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Item IDs array is required'
+      });
+    }
+
+    const cart = await Cart.findOne({ user: req.user._id, isActive: true });
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cart not found'
+      });
+    }
+
+    // Remove multiple items
+    let removedCount = 0;
+    itemIds.forEach(itemId => {
+      const itemExists = cart.items.id(itemId);
+      if (itemExists) {
+        cart.removeItem(itemId);
+        removedCount++;
+      }
+    });
+
+    await cart.save();
+
+    // Populate the cart for response
+    await cart.populate({
+      path: 'items.product',
+      select: 'name images price originalPrice brand category isActive',
+      populate: {
+        path: 'vendor',
+        select: 'username fullName vendorInfo.businessName'
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `${removedCount} item(s) removed from cart successfully`,
+      removedCount: removedCount,
+      cart: cart,
+      summary: cart.summary
+    });
+  } catch (error) {
+    console.error('Bulk remove cart error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to remove items from cart',
+      error: error.message
+    });
+  }
+});
+
 // Clear entire cart
 router.delete('/clear', auth, requireRole(['customer']), async (req, res) => {
   try {
@@ -225,12 +379,14 @@ router.delete('/clear', auth, requireRole(['customer']), async (req, res) => {
       });
     }
 
+    const itemCount = cart.items.length;
     cart.clearCart();
     await cart.save();
 
     res.json({
       success: true,
-      message: 'Cart cleared successfully',
+      message: `Cart cleared successfully. ${itemCount} item(s) removed.`,
+      clearedCount: itemCount,
       cart: cart,
       summary: cart.summary
     });

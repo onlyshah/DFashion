@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { CartService } from '../../../core/services/cart.service';
+import { WishlistNewService } from '../../../core/services/wishlist-new.service';
 import { User } from '../../../core/models/user.model';
 
 @Component({
@@ -49,9 +50,10 @@ import { User } from '../../../core/models/user.model';
               <i class="fas fa-shopping-bag"></i>
               <span>Shop</span>
             </a>
-            <a routerLink="/wishlist" routerLinkActive="active" class="nav-item">
+            <a routerLink="/wishlist" routerLinkActive="active" class="nav-item wishlist-item">
               <i class="fas fa-heart"></i>
               <span>Wishlist</span>
+              <span class="wishlist-badge" *ngIf="wishlistItemCount > 0">{{ wishlistItemCount }}</span>
             </a>
             <a routerLink="/cart" routerLinkActive="active" class="nav-item cart-item">
               <i class="fas fa-shopping-cart"></i>
@@ -190,11 +192,13 @@ import { User } from '../../../core/models/user.model';
       color: var(--primary-color);
     }
 
-    .cart-item {
+    .cart-item,
+    .wishlist-item {
       position: relative;
     }
 
-    .cart-badge {
+    .cart-badge,
+    .wishlist-badge {
       position: absolute;
       top: -2px;
       right: -2px;
@@ -362,25 +366,46 @@ export class HeaderComponent implements OnInit {
   searchQuery = '';
   showUserMenu = false;
   cartItemCount = 0;
+  wishlistItemCount = 0;
 
   constructor(
     private authService: AuthService,
     private cartService: CartService,
+    private wishlistService: WishlistNewService,
     private router: Router
   ) {}
 
   ngOnInit() {
+    // Subscribe to user changes and refresh counts on login
     this.authService.currentUser$.subscribe(user => {
+      const wasLoggedOut = !this.currentUser;
       this.currentUser = user;
+
+      // If user just logged in, refresh cart and wishlist
+      if (user && wasLoggedOut) {
+        console.log('🔄 User logged in, refreshing cart and wishlist...');
+        setTimeout(() => {
+          this.cartService.refreshCartOnLogin();
+          this.wishlistService.refreshWishlistOnLogin();
+        }, 100);
+      }
     });
 
     // Subscribe to cart count
     this.cartService.cartItemCount$.subscribe((count: number) => {
       this.cartItemCount = count;
+      console.log('🛒 Header cart count updated:', count);
     });
 
-    // Load cart on init
+    // Subscribe to wishlist count
+    this.wishlistService.wishlistItemCount$.subscribe((count: number) => {
+      this.wishlistItemCount = count;
+      console.log('💝 Header wishlist count updated:', count);
+    });
+
+    // Load cart and wishlist on init
     this.cartService.loadCart();
+    this.wishlistService.loadWishlist();
 
     // Close dropdown when clicking outside
     document.addEventListener('click', (event) => {

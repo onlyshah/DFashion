@@ -236,12 +236,26 @@ cartSchema.pre('save', function(next) {
 });
 
 // Static method to find or create cart for user
-cartSchema.statics.findOrCreateForUser = async function(userId) {
+cartSchema.statics.findOrCreateForUser = async function(userId, shouldPopulate = true) {
   let cart = await this.findOne({ user: userId, isActive: true });
   if (!cart) {
     cart = new this({ user: userId });
     await cart.save();
   }
+
+  // Populate related data if requested
+  if (shouldPopulate) {
+    cart = await this.findById(cart._id)
+      .populate({
+        path: 'items.product',
+        select: 'name images price originalPrice brand category isActive sizes colors vendor',
+        populate: {
+          path: 'vendor',
+          select: 'username fullName vendorInfo.businessName'
+        }
+      });
+  }
+
   return cart;
 };
 

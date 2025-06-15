@@ -2,27 +2,7 @@ import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-user-avatar',
-  template: `
-    <div class="user-avatar" [class]="size" [style.background-color]="backgroundColor">
-      <img 
-        *ngIf="avatarUrl" 
-        [src]="avatarUrl" 
-        [alt]="displayName"
-        (error)="onImageError()"
-        [class.hidden]="imageError">
-      
-      <div class="initials" *ngIf="!avatarUrl || imageError">
-        {{ initials }}
-      </div>
-      
-      <!-- Online status indicator -->
-      <div class="status-indicator" 
-           *ngIf="showStatus" 
-           [class.online]="isOnline"
-           [class.offline]="!isOnline">
-      </div>
-    </div>
-  `,
+  templateUrl: './user-avatar.component.html',
   styleUrls: ['./user-avatar.component.scss']
 })
 export class UserAvatarComponent {

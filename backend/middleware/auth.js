@@ -5,26 +5,34 @@ const User = require('../models/User');
 const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+    console.log('🔐 Auth middleware - Token present:', !!token);
+
     if (!token) {
+      console.log('🔐 Auth middleware - No token provided');
       return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('🔐 Auth middleware - Token decoded, userId:', decoded.userId);
+
     const user = await User.findById(decoded.userId).select('-password');
-    
+    console.log('🔐 Auth middleware - User found:', !!user);
+
     if (!user) {
+      console.log('🔐 Auth middleware - User not found in database');
       return res.status(401).json({ message: 'Token is not valid' });
     }
 
     if (!user.isActive) {
+      console.log('🔐 Auth middleware - User account is deactivated');
       return res.status(401).json({ message: 'Account is deactivated' });
     }
 
+    console.log('🔐 Auth middleware - User authenticated:', user.email, 'Role:', user.role);
     req.user = user;
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.error('❌ Auth middleware error:', error);
     res.status(401).json({ message: 'Token is not valid' });
   }
 };
@@ -61,12 +69,25 @@ const requireAdmin = (req, res, next) => {
 const requireRole = (roles) => {
   return (req, res, next) => {
     const allowedRoles = Array.isArray(roles) ? roles : [roles];
+    console.log('🔐 Role check - User role:', req.user?.role, 'Required roles:', allowedRoles);
+
+    if (!req.user) {
+      console.log('🔐 Role check - No user object found');
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
     if (!allowedRoles.includes(req.user.role)) {
+      console.log('🔐 Role check - Access denied for role:', req.user.role);
       return res.status(403).json({
         success: false,
         message: `Access denied. Required roles: ${allowedRoles.join(', ')}`
       });
     }
+
+    console.log('🔐 Role check - Access granted');
     next();
   };
 };

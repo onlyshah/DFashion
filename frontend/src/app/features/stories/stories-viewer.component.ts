@@ -62,13 +62,49 @@ interface Story {
 
       <!-- Progress Bars -->
       <div class="progress-container">
-        <div class="progress-bar" 
+        <div class="progress-bar"
              *ngFor="let story of stories; let i = index"
              [class.active]="i === currentIndex"
              [class.completed]="i < currentIndex">
-          <div class="progress-fill" 
+          <div class="progress-fill"
                [style.width.%]="getProgressWidth(i)"
                [style.animation-duration.s]="story.media.duration"></div>
+        </div>
+      </div>
+
+      <!-- Story Navigation Slider (for many stories) -->
+      <div class="story-navigation" *ngIf="stories.length > 5">
+        <div class="nav-slider-container">
+          <button class="nav-slider-btn prev"
+                  (click)="scrollStoriesLeft()"
+                  [disabled]="!canScrollLeft">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+
+          <div class="story-thumbnails" #storyThumbnails>
+            <div class="story-thumbnail"
+                 *ngFor="let story of stories; let i = index"
+                 [class.active]="i === currentIndex"
+                 [class.viewed]="i < currentIndex"
+                 (click)="jumpToStoryIndex(i)">
+              <img [src]="getStoryThumbnail(story)"
+                   [alt]="story.user.username"
+                   class="thumbnail-image">
+              <div class="thumbnail-overlay">
+                <img [src]="story.user.avatar || '/assets/images/default-avatar.png'"
+                     [alt]="story.user.fullName"
+                     class="user-thumbnail-avatar">
+              </div>
+              <div class="thumbnail-progress"
+                   [style.width.%]="getThumbnailProgress(i)"></div>
+            </div>
+          </div>
+
+          <button class="nav-slider-btn next"
+                  (click)="scrollStoriesRight()"
+                  [disabled]="!canScrollRight">
+            <i class="fas fa-chevron-right"></i>
+          </button>
         </div>
       </div>
 
@@ -321,6 +357,122 @@ interface Story {
     @keyframes progress {
       from { width: 0%; }
       to { width: 100%; }
+    }
+
+    /* Story Navigation Slider */
+    .story-navigation {
+      position: absolute;
+      top: 70px;
+      left: 0;
+      right: 0;
+      z-index: 15;
+      background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 100%);
+      padding: 12px 0;
+    }
+
+    .nav-slider-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+    }
+
+    .nav-slider-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .nav-slider-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.1);
+    }
+
+    .nav-slider-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .story-thumbnails {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      flex: 1;
+      padding: 4px 0;
+    }
+
+    .story-thumbnails::-webkit-scrollbar {
+      display: none;
+    }
+
+    .story-thumbnail {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      border: 2px solid transparent;
+    }
+
+    .story-thumbnail.active {
+      border-color: #fff;
+      transform: scale(1.1);
+    }
+
+    .story-thumbnail.viewed {
+      opacity: 0.6;
+    }
+
+    .story-thumbnail:hover {
+      transform: scale(1.05);
+    }
+
+    .thumbnail-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .thumbnail-overlay {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #000;
+      overflow: hidden;
+    }
+
+    .user-thumbnail-avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .thumbnail-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: #fff;
+      transition: width 0.3s ease;
+      border-radius: 0 0 50px 50px;
     }
 
     .story-content {
@@ -677,6 +829,71 @@ interface Story {
       cursor: not-allowed;
     }
 
+    /* Responsive Navigation Slider */
+    @media (max-width: 768px) {
+      .story-navigation {
+        top: 60px;
+        padding: 8px 0;
+      }
+
+      .nav-slider-container {
+        padding: 0 12px;
+        gap: 6px;
+      }
+
+      .nav-slider-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+      }
+
+      .story-thumbnails {
+        gap: 6px;
+      }
+
+      .story-thumbnail {
+        width: 40px;
+        height: 40px;
+      }
+
+      .thumbnail-overlay {
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .story-navigation {
+        top: 55px;
+        padding: 6px 0;
+      }
+
+      .nav-slider-container {
+        padding: 0 8px;
+        gap: 4px;
+      }
+
+      .nav-slider-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
+      }
+
+      .story-thumbnails {
+        gap: 4px;
+      }
+
+      .story-thumbnail {
+        width: 36px;
+        height: 36px;
+      }
+
+      .thumbnail-overlay {
+        width: 14px;
+        height: 14px;
+      }
+    }
+
     /* Enhanced Responsive Design */
     @media (max-width: 768px) {
       .story-header {
@@ -896,7 +1113,8 @@ interface Story {
 })
 export class StoriesViewerComponent implements OnInit, OnDestroy {
   @ViewChild('storyVideo') storyVideo!: ElementRef<HTMLVideoElement>;
-  
+  @ViewChild('storyThumbnails') storyThumbnails!: ElementRef<HTMLDivElement>;
+
   stories: Story[] = [];
   currentIndex = 0;
   currentStory!: Story;
@@ -906,7 +1124,11 @@ export class StoriesViewerComponent implements OnInit, OnDestroy {
   showCommentsModal = false;
   comments: any[] = [];
   newComment = '';
-  
+
+  // Navigation slider properties
+  canScrollLeft = false;
+  canScrollRight = false;
+
   private progressTimer: any;
   private storyDuration = 15000; // 15 seconds default
 
@@ -937,6 +1159,12 @@ export class StoriesViewerComponent implements OnInit, OnDestroy {
     // Add keyboard listeners for better UX
     this.addKeyboardListeners();
     this.addTouchListeners();
+
+    // Initialize navigation slider after view init
+    setTimeout(() => {
+      this.updateScrollButtons();
+      this.updateNavigationSlider();
+    }, 100);
   }
 
   ngOnDestroy() {
@@ -958,6 +1186,11 @@ export class StoriesViewerComponent implements OnInit, OnDestroy {
             this.currentIndex = startIndex;
             this.currentStory = this.stories[startIndex];
             this.startStoryTimer();
+            // Initialize navigation slider
+            setTimeout(() => {
+              this.updateScrollButtons();
+              this.updateNavigationSlider();
+            }, 100);
           }
         }
       })
@@ -1014,6 +1247,7 @@ export class StoriesViewerComponent implements OnInit, OnDestroy {
       this.currentIndex++;
       this.currentStory = this.stories[this.currentIndex];
       this.startStoryTimer();
+      this.updateNavigationSlider();
     } else {
       this.closeStories();
     }
@@ -1024,6 +1258,16 @@ export class StoriesViewerComponent implements OnInit, OnDestroy {
       this.currentIndex--;
       this.currentStory = this.stories[this.currentIndex];
       this.startStoryTimer();
+      this.updateNavigationSlider();
+    }
+  }
+
+  jumpToStoryIndex(index: number) {
+    if (index >= 0 && index < this.stories.length && index !== this.currentIndex) {
+      this.currentIndex = index;
+      this.currentStory = this.stories[index];
+      this.startStoryTimer();
+      this.updateNavigationSlider();
     }
   }
 
@@ -1043,6 +1287,63 @@ export class StoriesViewerComponent implements OnInit, OnDestroy {
     if (index < this.currentIndex) return 100;
     if (index > this.currentIndex) return 0;
     return 0; // Will be animated by CSS
+  }
+
+  // Navigation slider methods
+  getStoryThumbnail(story: Story): string {
+    if (story.media.type === 'video' && story.media.thumbnail) {
+      return story.media.thumbnail;
+    }
+    return story.media.url;
+  }
+
+  getThumbnailProgress(index: number): number {
+    if (index < this.currentIndex) return 100;
+    if (index > this.currentIndex) return 0;
+    if (index === this.currentIndex) {
+      // Calculate current progress based on timer
+      return 0; // Will be updated by progress animation
+    }
+    return 0;
+  }
+
+  scrollStoriesLeft() {
+    if (this.storyThumbnails) {
+      const container = this.storyThumbnails.nativeElement;
+      container.scrollBy({ left: -200, behavior: 'smooth' });
+      setTimeout(() => this.updateScrollButtons(), 300);
+    }
+  }
+
+  scrollStoriesRight() {
+    if (this.storyThumbnails) {
+      const container = this.storyThumbnails.nativeElement;
+      container.scrollBy({ left: 200, behavior: 'smooth' });
+      setTimeout(() => this.updateScrollButtons(), 300);
+    }
+  }
+
+  updateNavigationSlider() {
+    if (this.storyThumbnails && this.stories.length > 5) {
+      const container = this.storyThumbnails.nativeElement;
+      const thumbnailWidth = 56; // 48px + 8px gap
+      const containerWidth = container.clientWidth;
+      const currentThumbnailPosition = this.currentIndex * thumbnailWidth;
+
+      // Center the current thumbnail
+      const scrollPosition = currentThumbnailPosition - (containerWidth / 2) + (thumbnailWidth / 2);
+      container.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+
+      setTimeout(() => this.updateScrollButtons(), 300);
+    }
+  }
+
+  updateScrollButtons() {
+    if (this.storyThumbnails) {
+      const container = this.storyThumbnails.nativeElement;
+      this.canScrollLeft = container.scrollLeft > 0;
+      this.canScrollRight = container.scrollLeft < (container.scrollWidth - container.clientWidth);
+    }
   }
 
   closeStories() {
