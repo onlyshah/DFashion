@@ -357,4 +357,163 @@ router.get('/filters', async (req, res) => {
   }
 });
 
+// @route   GET /api/products/trending
+// @desc    Get trending products
+// @access  Public
+router.get('/trending', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 12;
+
+    const products = await Product.find({ isActive: true })
+      .populate('vendor', 'username fullName avatar')
+      .sort({ 'analytics.views': -1, 'analytics.likes': -1, createdAt: -1 })
+      .limit(limit);
+
+    res.json({
+      success: true,
+      data: products
+    });
+  } catch (error) {
+    console.error('Get trending products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch trending products'
+    });
+  }
+});
+
+// @route   GET /api/products/new-arrivals
+// @desc    Get new arrival products
+// @access  Public
+router.get('/new-arrivals', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 12;
+
+    const products = await Product.find({ isActive: true })
+      .populate('vendor', 'username fullName avatar')
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    res.json({
+      success: true,
+      data: products
+    });
+  } catch (error) {
+    console.error('Get new arrivals error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch new arrivals'
+    });
+  }
+});
+
+// @route   POST /api/products/:id/like
+// @desc    Toggle product like
+// @access  Private
+router.post('/:id/like', auth, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Toggle like
+    await Product.findByIdAndUpdate(req.params.id, {
+      $inc: { 'analytics.likes': 1 }
+    });
+
+    res.json({
+      success: true,
+      message: 'Product liked successfully'
+    });
+  } catch (error) {
+    console.error('Like product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to like product'
+    });
+  }
+});
+
+// @route   POST /api/products/:id/share
+// @desc    Track product share
+// @access  Public
+router.post('/:id/share', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Increment share count
+    await Product.findByIdAndUpdate(req.params.id, {
+      $inc: { 'analytics.shares': 1 }
+    });
+
+    res.json({
+      success: true,
+      message: 'Product share tracked successfully'
+    });
+  } catch (error) {
+    console.error('Share product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to track product share'
+    });
+  }
+});
+
+// @route   GET /api/products/category/:slug
+// @desc    Get products by category slug
+// @access  Public
+router.get('/category/:slug', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortOrder = req.query.sortOrder || 'desc';
+
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const products = await Product.find({
+      category: req.params.slug,
+      isActive: true
+    })
+    .populate('vendor', 'username fullName avatar')
+    .sort(sort)
+    .skip(skip)
+    .limit(limit);
+
+    const total = await Product.countDocuments({
+      category: req.params.slug,
+      isActive: true
+    });
+
+    res.json({
+      success: true,
+      products,
+      pagination: {
+        current: page,
+        pages: Math.ceil(total / limit),
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Get category products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch category products'
+    });
+  }
+});
+
 module.exports = router;

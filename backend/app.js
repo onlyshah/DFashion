@@ -296,6 +296,20 @@ try {
     console.error('❌ Error loading user wishlist/cart routes:', error.message);
 }
 
+try {
+    app.use('/api/categories', require('./routes/categories'));
+    console.log('✅ Categories routes loaded');
+} catch (error) {
+    console.error('❌ Error loading categories routes:', error.message);
+}
+
+try {
+    app.use('/api/brands', require('./routes/brands'));
+    console.log('✅ Brands routes loaded');
+} catch (error) {
+    console.error('❌ Error loading brands routes:', error.message);
+}
+
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
     res.json({

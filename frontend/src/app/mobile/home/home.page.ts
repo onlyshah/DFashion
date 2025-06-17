@@ -92,7 +92,8 @@ export class HomePage implements OnInit {
   }
 
   onStoryClick(story: any) {
-    this.router.navigate(['/stories', story.id]);
+    // Navigate to stories viewer with the specific story
+    this.router.navigate(['/tabs/stories']);
   }
 
   onCategoryClick(category: any) {

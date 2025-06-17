@@ -49,6 +49,7 @@ import { MediaService, MediaItem } from '../../../../core/services/media.service
           (error)="handleImageError($event)"
           (load)="onMediaLoadComplete()"
           (dblclick)="onDoubleTap()"
+          (click)="toggleProductTags()"
         >
 
         <!-- Video Media -->
@@ -119,15 +120,20 @@ import { MediaService, MediaItem } from '../../../../core/services/media.service
           <i class="fas fa-heart"></i>
         </div>
 
-        <!-- Product Tags -->
-        <div class="product-tags">
+        <!-- Product Tags (Instagram-style - hidden by default) -->
+        <div class="product-tags"
+             [class.show-tags]="showProductTags"
+             *ngIf="post.products && post.products.length > 0">
           <div
             *ngFor="let productTag of post.products"
             class="product-tag"
-            [style.top.%]="productTag.position.y"
-            [style.left.%]="productTag.position.x"
+            [style.top.%]="productTag.position.y || 50"
+            [style.left.%]="productTag.position.x || 50"
+            (click)="viewProduct(productTag.product._id); $event.stopPropagation()"
           >
-            <div class="tag-dot"></div>
+            <div class="tag-dot">
+              <div class="tag-pulse"></div>
+            </div>
             <div class="product-info">
               <img
                 [src]="getProductImageUrl(productTag.product.images[0].url || '')"
@@ -151,6 +157,12 @@ import { MediaService, MediaItem } from '../../../../core/services/media.service
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Shopping indicator (Instagram-style) -->
+        <div class="shopping-indicator" *ngIf="post.products && post.products.length > 0 && !showProductTags">
+          <i class="fas fa-shopping-bag"></i>
+          <span>Tap to view products</span>
         </div>
       </div>
 
@@ -707,6 +719,12 @@ import { MediaService, MediaItem } from '../../../../core/services/media.service
       left: 0;
       right: 0;
       bottom: 0;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .product-tags.show-tags {
+      opacity: 1;
     }
 
     .product-tag {
@@ -831,6 +849,38 @@ import { MediaService, MediaItem } from '../../../../core/services/media.service
     .quick-btn:hover {
       transform: scale(1.1);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .shopping-indicator {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+      animation: fadeInUp 0.3s ease;
+      cursor: pointer;
+
+      i {
+        font-size: 14px;
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .post-actions {
@@ -1076,6 +1126,7 @@ export class PostCardComponent implements OnInit {
   likesCount = 0;
   newComment = '';
   showComments = false;
+  showProductTags = false;
   wishlistItems: string[] = [];
   cartItems: string[] = [];
 
@@ -1109,7 +1160,7 @@ export class PostCardComponent implements OnInit {
   initializeMedia() {
     // Process media items with enhanced video support and content matching
     const contentHint = this.post.caption || this.post.hashtags?.join(' ') || '';
-    this.mediaItems = this.mediaService.enhanceWithSampleVideos(this.post.media || [], 2, contentHint);
+    this.mediaItems = this.mediaService.processMediaItems(this.post.media || []);
 
     this.currentMediaIndex = 0;
     this.currentMedia = this.mediaItems[0] || {
@@ -1132,15 +1183,13 @@ export class PostCardComponent implements OnInit {
   }
 
   loadWishlistItems() {
-    // Load from localStorage for demo
-    const saved = localStorage.getItem('wishlist');
-    this.wishlistItems = saved ? JSON.parse(saved) : [];
+    // Load from real API via service
+    this.wishlistItems = [];
   }
 
   loadCartItems() {
-    // Load from localStorage for demo
-    const saved = localStorage.getItem('cart');
-    this.cartItems = saved ? JSON.parse(saved) : [];
+    // Load from real API via service
+    this.cartItems = [];
   }
 
   getTimeAgo(date: Date): string {
@@ -1367,6 +1416,24 @@ export class PostCardComponent implements OnInit {
     setTimeout(() => {
       this.showHeartAnimation = false;
     }, 1000);
+  }
+
+  toggleProductTags(): void {
+    // Toggle product tags visibility (Instagram-style)
+    if (this.post.products && this.post.products.length > 0) {
+      this.showProductTags = !this.showProductTags;
+
+      // Auto-hide after 3 seconds
+      if (this.showProductTags) {
+        setTimeout(() => {
+          this.showProductTags = false;
+        }, 3000);
+      }
+    }
+  }
+
+  viewProduct(productId: string): void {
+    this.router.navigate(['/shop/product', productId]);
   }
 
   formatDuration(seconds: number): string {

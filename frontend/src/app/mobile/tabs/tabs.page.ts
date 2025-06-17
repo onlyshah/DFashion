@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { CartService } from '../../core/services/cart.service';
+import { WishlistService } from '../../core/services/wishlist.service';
 
 @Component({
   selector: 'app-tabs',
@@ -9,13 +10,15 @@ import { CartService } from '../../core/services/cart.service';
 })
 export class TabsPage implements OnInit {
   cartItemCount = 0;
+  wishlistItemCount = 0;
   isAuthenticated = false;
   isVendor = false;
   currentUser: any = null;
 
   constructor(
     private authService: AuthService,
-    private cartService: CartService
+    private cartService: CartService,
+    private wishlistService: WishlistService
   ) {}
 
   ngOnInit() {
@@ -33,6 +36,11 @@ export class TabsPage implements OnInit {
     // Subscribe to cart count
     this.cartService.cartItemCount$.subscribe(
       count => this.cartItemCount = count
+    );
+
+    // Subscribe to wishlist count
+    this.wishlistService.wishlistItemCount$.subscribe(
+      count => this.wishlistItemCount = count
     );
   }
 }

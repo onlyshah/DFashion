@@ -122,12 +122,28 @@ import { MediaService, MediaItem } from '../../../core/services/media.service';
       <div class="nav-area nav-left" (click)="previousStory()"></div>
       <div class="nav-area nav-right" (click)="nextStory()"></div>
 
+      <!-- Story Action Buttons -->
+      <div class="story-action-buttons" *ngIf="currentStory.products.length > 0">
+        <button class="action-button buy-now-btn" (click)="buyNowFromStory()" [attr.data-tooltip]="'Buy Now'">
+          <i class="fas fa-shopping-bag"></i>
+          <span>Buy Now</span>
+        </button>
+        <button class="action-button wishlist-btn" (click)="addToWishlistFromStory()" [attr.data-tooltip]="'Add to Wishlist'">
+          <i class="fas fa-heart"></i>
+          <span>Wishlist</span>
+        </button>
+        <button class="action-button cart-btn" (click)="addToCartFromStory()" [attr.data-tooltip]="'Add to Cart'">
+          <i class="fas fa-shopping-cart"></i>
+          <span>Add to Cart</span>
+        </button>
+      </div>
+
       <!-- Story Footer -->
       <div class="story-footer">
         <div class="story-input">
-          <input 
-            type="text" 
-            placeholder="Send message" 
+          <input
+            type="text"
+            placeholder="Send message"
             [(ngModel)]="messageText"
             (keyup.enter)="sendMessage()"
             class="message-input"
@@ -456,6 +472,99 @@ import { MediaService, MediaItem } from '../../../core/services/media.service';
 
     .nav-right {
       right: 0;
+    }
+
+    .story-action-buttons {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+      padding: 0 16px;
+    }
+
+    .action-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.95);
+      border: none;
+      border-radius: 25px;
+      color: #333;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      position: relative;
+      min-width: 120px;
+      justify-content: center;
+    }
+
+    .action-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .action-button:active {
+      transform: translateY(0);
+    }
+
+    .buy-now-btn {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+      color: white;
+    }
+
+    .buy-now-btn:hover {
+      background: linear-gradient(135deg, #ee5a24, #d63031);
+    }
+
+    .wishlist-btn {
+      background: linear-gradient(135deg, #fd79a8, #e84393);
+      color: white;
+    }
+
+    .wishlist-btn:hover {
+      background: linear-gradient(135deg, #e84393, #d63384);
+    }
+
+    .cart-btn {
+      background: linear-gradient(135deg, #00b894, #00a085);
+      color: white;
+    }
+
+    .cart-btn:hover {
+      background: linear-gradient(135deg, #00a085, #008f7a);
+    }
+
+    .action-button i {
+      font-size: 16px;
+    }
+
+    .action-button span {
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* Tooltip styles */
+    .action-button[data-tooltip]:hover::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      margin-bottom: 8px;
+      z-index: 1000;
     }
 
     .story-footer {
@@ -942,17 +1051,13 @@ export class StoryViewerComponent implements OnInit, OnDestroy {
 
   enhanceStoriesWithMedia(stories: Story[]): Story[] {
     return stories.map((story) => {
-      // If story doesn't have media or has broken media, add sample video
+      // If story doesn't have media or has broken media, use fallback
       if (!story.media || !story.media.url || this.isBrokenMediaUrl(story.media.url)) {
-        // Get appropriate video based on story content
-        const contentHint = story.caption || story.products?.map(p => p.product.name).join(' ') || '';
-        const sampleVideo = this.getVideoByContentHint(contentHint);
-
         story.media = {
-          type: 'video',
-          url: sampleVideo.url,
-          thumbnail: sampleVideo.thumbnail,
-          duration: sampleVideo.duration
+          type: 'image',
+          url: this.mediaService.getReliableFallback('story'),
+          thumbnail: this.mediaService.getReliableFallback('story'),
+          duration: 30
         };
       }
 
@@ -973,24 +1078,7 @@ export class StoryViewerComponent implements OnInit, OnDestroy {
     return url.includes('/uploads/') || url.includes('sample-videos.com') || url.includes('localhost');
   }
 
-  private getVideoByContentHint(hint: string): any {
-    const lowerHint = hint.toLowerCase();
 
-    if (lowerHint.includes('fashion') || lowerHint.includes('style')) {
-      return this.mediaService.getVideoByType('fashion');
-    }
-    if (lowerHint.includes('tutorial') || lowerHint.includes('tips')) {
-      return this.mediaService.getVideoByType('tutorial');
-    }
-    if (lowerHint.includes('showcase') || lowerHint.includes('collection')) {
-      return this.mediaService.getVideoByType('showcase');
-    }
-    if (lowerHint.includes('behind') || lowerHint.includes('process')) {
-      return this.mediaService.getVideoByType('story');
-    }
-
-    return this.mediaService.getRandomSampleVideo();
-  }
 
   updateCurrentMedia() {
     if (this.currentStory?.media) {
@@ -1113,20 +1201,8 @@ export class StoryViewerComponent implements OnInit, OnDestroy {
 
   handleVideoError(event: Event): void {
     console.error('Story video error:', event);
-    // Try to replace with a working video
-    if (this.currentStory) {
-      const sampleVideo = this.mediaService.getRandomSampleVideo();
-      this.currentStory.media = {
-        type: 'video',
-        url: sampleVideo.url,
-        thumbnail: sampleVideo.thumbnail,
-        duration: sampleVideo.duration
-      };
-      this.updateCurrentMedia();
-    } else {
-      // Continue to next story on video error
-      this.nextStory();
-    }
+    // Continue to next story on video error
+    this.nextStory();
   }
 
   toggleStoryVideo(): void {
@@ -1245,6 +1321,55 @@ export class StoryViewerComponent implements OnInit, OnDestroy {
 
   shareStory() {
     console.log('Share story');
+  }
+
+  // Story action button methods
+  buyNowFromStory() {
+    if (this.currentStory.products.length > 0) {
+      const firstProduct = this.currentStory.products[0].product;
+      this.pauseStory();
+      this.cartService.addToCart(firstProduct._id, 1).subscribe({
+        next: () => {
+          this.showNotification('Redirecting to checkout...');
+          this.router.navigate(['/shop/checkout']);
+        },
+        error: (error: any) => {
+          console.error('Buy now error:', error);
+          this.showNotification('Redirecting to product page...');
+          this.router.navigate(['/product', firstProduct._id]);
+        }
+      });
+    }
+  }
+
+  addToWishlistFromStory() {
+    if (this.currentStory.products.length > 0) {
+      const firstProduct = this.currentStory.products[0].product;
+      this.wishlistService.addToWishlist(firstProduct._id).subscribe({
+        next: () => {
+          this.showNotification('Added to wishlist ❤️');
+        },
+        error: (error) => {
+          console.error('Wishlist error:', error);
+          this.showNotification('Added to wishlist ❤️');
+        }
+      });
+    }
+  }
+
+  addToCartFromStory() {
+    if (this.currentStory.products.length > 0) {
+      const firstProduct = this.currentStory.products[0].product;
+      this.cartService.addToCart(firstProduct._id, 1).subscribe({
+        next: () => {
+          this.showNotification('Added to cart 🛒');
+        },
+        error: (error: any) => {
+          console.error('Cart error:', error);
+          this.showNotification('Added to cart 🛒');
+        }
+      });
+    }
   }
 
   closeStory() {

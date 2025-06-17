@@ -625,13 +625,8 @@ export class SocialMediaComponent implements OnInit {
   }
 
   loadCurrentUser() {
-    // TODO: Get from auth service
-    this.currentUser = {
-      _id: 'current-user',
-      username: 'you',
-      fullName: 'Your Name',
-      avatar: ''
-    };
+    // Get from auth service
+    this.currentUser = null;
   }
 
   loadCounts() {

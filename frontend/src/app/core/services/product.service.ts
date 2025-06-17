@@ -50,8 +50,8 @@ export class ProductService {
     return this.http.get<{ products: Product[] }>(`${this.API_URL}/products/featured`);
   }
 
-  getTrendingProducts(): Observable<{ products: Product[] }> {
-    return this.http.get<{ products: Product[] }>(`${this.API_URL}/products/trending`);
+  getTrendingProducts(): Observable<{ success: boolean; data: Product[] }> {
+    return this.http.get<{ success: boolean; data: Product[] }>(`${this.API_URL}/products/trending`);
   }
 
   getVendorProducts(vendorId: string, filters: ProductFilters = {}): Observable<ProductsResponse> {
@@ -72,11 +72,44 @@ export class ProductService {
     return this.getProducts(searchFilters);
   }
 
-  getCategories(): Observable<{ categories: string[] }> {
-    return this.http.get<{ categories: string[] }>(`${this.API_URL}/products/categories`);
+  getCategories(): Observable<{ success: boolean; data: any[] }> {
+    return this.http.get<{ success: boolean; data: any[] }>(`${this.API_URL}/categories`);
   }
 
   getBrands(): Observable<{ brands: string[] }> {
     return this.http.get<{ brands: string[] }>(`${this.API_URL}/products/brands`);
+  }
+
+  // Featured Brands
+  getFeaturedBrands(): Observable<{ success: boolean; data: any[] }> {
+    return this.http.get<{ success: boolean; data: any[] }>(`${this.API_URL}/brands/featured`);
+  }
+
+  // New Arrivals
+  getNewArrivals(): Observable<{ success: boolean; data: Product[] }> {
+    return this.http.get<{ success: boolean; data: Product[] }>(`${this.API_URL}/products/new-arrivals`);
+  }
+
+  // Product interactions
+  toggleProductLike(productId: string): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${this.API_URL}/products/${productId}/like`, {});
+  }
+
+  shareProduct(productId: string): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${this.API_URL}/products/${productId}/share`, {});
+  }
+
+  // Category products
+  getCategoryProducts(categorySlug: string, filters: ProductFilters = {}): Observable<ProductsResponse> {
+    let params = new HttpParams();
+
+    Object.keys(filters).forEach(key => {
+      const value = (filters as any)[key];
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, value.toString());
+      }
+    });
+
+    return this.http.get<ProductsResponse>(`${this.API_URL}/products/category/${categorySlug}`, { params });
   }
 }

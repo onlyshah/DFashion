@@ -2,18 +2,27 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { ProductService } from '../../core/services/product.service';
+import { AuthService } from '../../core/services/auth.service';
+import { CartService } from '../../core/services/cart.service';
+import { WishlistService } from '../../core/services/wishlist.service';
 
 interface Product {
   _id: string;
   name: string;
   price: number;
   originalPrice?: number;
-  images: { url: string; alt: string }[];
+  images: { url: string; alt?: string }[];
   brand: string;
   rating: { average: number; count: number };
   category: string;
   subcategory: string;
   tags: string[];
+  analytics?: {
+    views: number;
+    likes: number;
+    shares: number;
+  };
 }
 
 @Component({
@@ -478,32 +487,40 @@ export class CategoryComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private productService: ProductService,
+    private authService: AuthService,
+    private cartService: CartService,
+    private wishlistService: WishlistService
   ) {}
 
   ngOnInit() {
     this.route.params.subscribe(params => {
-      this.category = params['category'];
+      this.category = params['slug'] || params['category'];
       this.loadProducts();
     });
   }
 
   loadProducts() {
     this.loading = true;
-    
-    // TODO: Replace with actual API call
-    // For now, using mock data based on category
-    setTimeout(() => {
-      this.products = this.getMockProducts();
-      this.filteredProducts = [...this.products];
-      this.loading = false;
-    }, 1000);
+
+    // Load products from API using category slug
+    this.productService.getCategoryProducts(this.category).subscribe({
+      next: (response) => {
+        this.products = response.products || [];
+        this.applyFilters();
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading products:', error);
+        this.products = [];
+        this.filteredProducts = [];
+        this.loading = false;
+      }
+    });
   }
 
-  getMockProducts(): Product[] {
-    // Return empty array - products should come from API
-    return [];
-  }
+
 
   getCategoryDisplayName(): string {
     const categoryNames: { [key: string]: string } = {
@@ -527,6 +544,8 @@ export class CategoryComponent implements OnInit {
     return descriptions[this.category] || 'Explore our collection';
   }
 
+
+
   onSortChange() {
     this.applyFilters();
   }
@@ -548,10 +567,12 @@ export class CategoryComponent implements OnInit {
       }
     }
 
-    // Apply size filter (mock implementation)
+    // Apply size filter
     if (this.selectedSize) {
-      // In real implementation, check product.sizes array
-      filtered = filtered.filter(p => true); // Mock: all products have all sizes
+      // Filter products by available sizes
+      filtered = filtered.filter(p =>
+        (p as any).sizes && (p as any).sizes.some((size: any) => size.size === this.selectedSize)
+      );
     }
 
     // Apply sorting
@@ -566,8 +587,8 @@ export class CategoryComponent implements OnInit {
         filtered.sort((a, b) => (b.rating?.average || 0) - (a.rating?.average || 0));
         break;
       case 'newest':
-        // Mock: reverse order for newest
-        filtered.reverse();
+        // Sort by creation date (newest first)
+        filtered.sort((a, b) => new Date((b as any).createdAt || 0).getTime() - new Date((a as any).createdAt || 0).getTime());
         break;
       default:
         // Featured - keep original order
@@ -607,20 +628,44 @@ export class CategoryComponent implements OnInit {
 
   addToWishlist(product: Product, event: Event) {
     event.stopPropagation();
-    // TODO: Implement wishlist functionality
-    console.log('Add to wishlist:', product);
+    if (!this.authService.isAuthenticated) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.wishlistService.addToWishlist(product._id).subscribe({
+      next: (response) => {
+        console.log('Product added to wishlist:', response);
+        // You could show a toast notification here
+      },
+      error: (error) => {
+        console.error('Error adding to wishlist:', error);
+      }
+    });
   }
 
   quickView(product: Product, event: Event) {
     event.stopPropagation();
-    // TODO: Implement quick view modal
-    console.log('Quick view:', product);
+    // Navigate to product detail page
+    this.router.navigate(['/product', product._id]);
   }
 
   addToCart(product: Product, event: Event) {
     event.stopPropagation();
-    // TODO: Implement add to cart functionality
-    console.log('Add to cart:', product);
+    if (!this.authService.isAuthenticated) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.cartService.addToCart(product._id, 1).subscribe({
+      next: (response) => {
+        console.log('Product added to cart:', response);
+        alert('Product added to cart successfully!');
+      },
+      error: (error) => {
+        console.error('Error adding to cart:', error);
+      }
+    });
   }
 
   goHome() {

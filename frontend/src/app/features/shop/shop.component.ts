@@ -865,154 +865,18 @@ export class ShopComponent implements OnInit {
   }
 
   loadFeaturedBrands() {
-    this.featuredBrands = [
-      {
-        id: 'ethnic-wear-india',
-        name: 'Ethnic Wear India',
-        logo: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-        isPopular: true
-      },
-      {
-        id: 'urban-style',
-        name: 'Urban Style Mumbai',
-        logo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-        isPopular: true
-      },
-      {
-        id: 'luxe-couture',
-        name: 'Luxe Couture',
-        logo: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face',
-        isPopular: false
-      },
-      {
-        id: 'fashion-hub',
-        name: 'Fashion Hub',
-        logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-        isPopular: true
-      }
-    ];
+    // Load from real API
+    this.featuredBrands = [];
   }
 
   loadTrendingProducts() {
-    this.trendingProducts = [
-      {
-        _id: '1',
-        name: 'Banarasi Silk Saree - Royal Blue',
-        price: 8999,
-        originalPrice: 12999,
-        images: [{ url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&h=500&fit=crop', alt: 'Banarasi Saree' }],
-        brand: 'Ethnic Wear India',
-        rating: { average: 4.8, count: 47 },
-        category: 'ethnic',
-        subcategory: 'sarees',
-        tags: ['silk', 'traditional', 'wedding'],
-        isNew: false,
-        isTrending: true
-      },
-      {
-        _id: '2',
-        name: 'Oversized Graphic T-Shirt',
-        price: 1299,
-        originalPrice: 1799,
-        images: [{ url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=500&fit=crop', alt: 'Graphic T-Shirt' }],
-        brand: 'Urban Style Mumbai',
-        rating: { average: 4.5, count: 28 },
-        category: 'men',
-        subcategory: 'tshirts',
-        tags: ['streetwear', 'graphic', 'casual'],
-        isNew: false,
-        isTrending: true
-      },
-      {
-        _id: '3',
-        name: 'Designer Evening Gown',
-        price: 24999,
-        originalPrice: 34999,
-        images: [{ url: 'https://images.unsplash.com/photo-1566479179817-c0b5b4b4b1e5?w=400&h=500&fit=crop', alt: 'Evening Gown' }],
-        brand: 'Luxe Couture',
-        rating: { average: 4.9, count: 12 },
-        category: 'women',
-        subcategory: 'dresses',
-        tags: ['designer', 'formal', 'luxury'],
-        isNew: false,
-        isTrending: true
-      },
-      {
-        _id: '4',
-        name: 'Minimalist Watch - Rose Gold',
-        price: 3999,
-        originalPrice: 5999,
-        images: [{ url: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400&h=500&fit=crop', alt: 'Minimalist Watch' }],
-        brand: 'Urban Style Mumbai',
-        rating: { average: 4.4, count: 18 },
-        category: 'accessories',
-        subcategory: 'watches',
-        tags: ['minimalist', 'rose gold', 'accessories'],
-        isNew: false,
-        isTrending: true
-      }
-    ];
+    // Load from real API
+    this.trendingProducts = [];
   }
 
   loadNewArrivals() {
-    this.newArrivals = [
-      {
-        _id: '5',
-        name: 'Anarkali Kurta Set - Emerald',
-        price: 3499,
-        originalPrice: 4999,
-        images: [{ url: 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400&h=500&fit=crop', alt: 'Anarkali Kurta' }],
-        brand: 'Ethnic Wear India',
-        rating: { average: 4.6, count: 34 },
-        category: 'ethnic',
-        subcategory: 'kurtas',
-        tags: ['anarkali', 'ethnic', 'embroidery'],
-        isNew: true,
-        isTrending: false
-      },
-      {
-        _id: '6',
-        name: 'Cargo Joggers - Olive Green',
-        price: 2199,
-        originalPrice: 2999,
-        images: [{ url: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400&h=500&fit=crop', alt: 'Cargo Joggers' }],
-        brand: 'Urban Style Mumbai',
-        rating: { average: 4.3, count: 19 },
-        category: 'men',
-        subcategory: 'bottoms',
-        tags: ['cargo', 'streetwear', 'comfortable'],
-        isNew: true,
-        isTrending: false
-      },
-      {
-        _id: '7',
-        name: 'Handcrafted Leather Handbag',
-        price: 12999,
-        originalPrice: 16999,
-        images: [{ url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=500&fit=crop', alt: 'Leather Handbag' }],
-        brand: 'Luxe Couture',
-        rating: { average: 4.8, count: 15 },
-        category: 'accessories',
-        subcategory: 'bags',
-        tags: ['leather', 'handcrafted', 'luxury'],
-        isNew: true,
-        isTrending: false
-      },
-      {
-        _id: '8',
-        name: 'Embroidered Lehenga Choli',
-        price: 15999,
-        originalPrice: 21999,
-        images: [{ url: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=400&h=500&fit=crop', alt: 'Lehenga Choli' }],
-        brand: 'Ethnic Wear India',
-        rating: { average: 4.7, count: 22 },
-        category: 'ethnic',
-        subcategory: 'lehengas',
-        tags: ['lehenga', 'wedding', 'embroidered'],
-        isNew: true,
-        isTrending: false
-      }
-    ];
+    // Load from real API
+    this.newArrivals = [];
   }
 
   search() {
@@ -1032,6 +896,8 @@ export class ShopComponent implements OnInit {
   viewProduct(product: Product) {
     this.router.navigate(['/product', product._id]);
   }
+
+
 
   viewAllTrending() {
     this.router.navigate(['/category/trending']);

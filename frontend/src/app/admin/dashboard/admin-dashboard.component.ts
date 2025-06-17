@@ -163,18 +163,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.revenueChartData.data = [65, 25, 10];
   }
 
-  private loadMockData(): void {
-    // Load real data from API - empty for now
-    this.quickStats[0].value = 0;
-    this.quickStats[1].value = 0;
-    this.quickStats[2].value = 0;
-    this.quickStats[3].value = 0;
 
-    // Update charts with empty data
-    this.userGrowthChartData.data = [];
-    this.orderTrendsChartData.data = [];
-    this.revenueChartData.data = [];
-  }
 
   formatCurrency(value: number): string {
     return new Intl.NumberFormat('en-IN', {

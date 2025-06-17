@@ -81,29 +81,7 @@ export class VendorPage implements OnInit {
     }
   ];
 
-  recentActivity = [
-    {
-      icon: 'add-circle',
-      iconColor: 'success',
-      title: 'New product added',
-      subtitle: 'Summer Dress was added to your catalog',
-      time: '2 hours ago'
-    },
-    {
-      icon: 'bag',
-      iconColor: 'primary',
-      title: 'New order received',
-      subtitle: 'Order #12345 for ₹2,999',
-      time: '4 hours ago'
-    },
-    {
-      icon: 'camera',
-      iconColor: 'secondary',
-      title: 'Post published',
-      subtitle: 'Your latest fashion post is live',
-      time: '6 hours ago'
-    }
-  ];
+  recentActivity: any[] = [];
 
   constructor(
     private authService: AuthService,

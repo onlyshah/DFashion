@@ -90,22 +90,8 @@ export class CreatePostPage implements OnInit {
   searchProducts(event: any) {
     const query = event.target.value;
     if (query && query.length > 2) {
-      // TODO: Implement actual product search API
-      // For now, using mock data
-      this.searchResults = [
-        {
-          _id: '1',
-          name: 'Summer Dress',
-          price: 2999,
-          images: [{ url: '/assets/images/product1.jpg' }]
-        },
-        {
-          _id: '2',
-          name: 'Casual Shirt',
-          price: 1599,
-          images: [{ url: '/assets/images/product2.jpg' }]
-        }
-      ].filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
+      // Search products from API
+      this.searchResults = [];
     } else {
       this.searchResults = [];
     }

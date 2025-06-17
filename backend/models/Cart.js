@@ -114,8 +114,11 @@ cartSchema.virtual('summary').get(function() {
   return {
     totalItems: this.totalItems,
     totalAmount: this.totalAmount,
+    total: this.totalAmount, // Add this for frontend compatibility
     totalSavings: this.totalSavings,
-    itemCount: this.items.length
+    itemCount: this.items.length,
+    subtotal: this.totalOriginalAmount || this.totalAmount,
+    discount: this.totalSavings || 0
   };
 });
 

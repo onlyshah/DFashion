@@ -138,29 +138,7 @@ export class HeaderComponent implements OnInit {
   searchQuery: string = '';
   notificationCount: number = 3;
 
-  notifications = [
-    {
-      id: 1,
-      title: 'New Order',
-      message: 'Order #ORD-2024-001 has been placed',
-      time: '2024-01-15T10:30:00Z',
-      read: false
-    },
-    {
-      id: 2,
-      title: 'Low Stock Alert',
-      message: 'Classic White Shirt is running low on stock',
-      time: '2024-01-15T09:15:00Z',
-      read: false
-    },
-    {
-      id: 3,
-      title: 'New User Registration',
-      message: 'John Doe has registered as a new customer',
-      time: '2024-01-15T08:45:00Z',
-      read: true
-    }
-  ];
+  notifications: any[] = [];
 
   constructor(
     private adminAuthService: AdminAuthService

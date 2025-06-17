@@ -200,6 +200,18 @@ import { AuthService } from '../../core/services/auth.service';
         <!-- Order Summary Sidebar -->
         <div class="order-summary">
           <h3>Order Summary</h3>
+
+          <!-- Cart Total Amount Display (Prominent) -->
+          <div class="cart-total-highlight" *ngIf="cartSummary">
+            <div class="total-amount-display">
+              <i class="fas fa-shopping-cart"></i>
+              <div class="amount-details">
+                <span class="amount-label">Cart Total Amount</span>
+                <span class="amount-value">₹{{ cartSummary.total | number:'1.0-0' }}</span>
+              </div>
+            </div>
+          </div>
+
           <div class="summary-line">
             <span>Subtotal ({{ cartSummary?.itemCount }} items)</span>
             <span>₹{{ cartSummary?.subtotal | number:'1.0-0' }}</span>
@@ -217,7 +229,7 @@ import { AuthService } from '../../core/services/auth.service';
             <span>FREE</span>
           </div>
           <div class="summary-line total">
-            <span><strong>Total</strong></span>
+            <span><strong>Final Total</strong></span>
             <span><strong>₹{{ cartSummary?.total | number:'1.0-0' }}</strong></span>
           </div>
 
@@ -519,6 +531,44 @@ import { AuthService } from '../../core/services/auth.service';
       margin-bottom: 20px;
     }
 
+    .cart-total-highlight {
+      background: linear-gradient(135deg, #4834d4, #686de0);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      color: white;
+    }
+
+    .total-amount-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .total-amount-display i {
+      font-size: 24px;
+      color: #fff;
+    }
+
+    .amount-details {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .amount-label {
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+
+    .amount-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+    }
+
     .summary-line {
       display: flex;
       justify-content: space-between;
@@ -709,32 +759,14 @@ export class CheckoutComponent implements OnInit {
   }
 
   loadCartData() {
-    // Simulate cart data loading
-    this.cartItems = [
-      {
-        _id: '1',
-        product: {
-          _id: 'prod1',
-          name: 'Sample Product',
-          price: 999,
-          originalPrice: 1299,
-          images: [{ url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400', isPrimary: true }],
-          brand: 'Sample Brand',
-          discount: 23
-        },
-        quantity: 1,
-        size: 'M',
-        color: 'Blue',
-        addedAt: new Date()
-      }
-    ];
-
+    // Load cart data from API
+    this.cartItems = [];
     this.cartSummary = {
-      itemCount: 1,
-      totalQuantity: 1,
-      subtotal: 999,
-      discount: 300,
-      total: 878.82
+      itemCount: 0,
+      totalQuantity: 0,
+      subtotal: 0,
+      discount: 0,
+      total: 0
     } as any;
   }
 

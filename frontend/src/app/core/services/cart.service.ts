@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { StorageService } from './storage.service';
 import { ToastController } from '@ionic/angular';
@@ -39,12 +39,18 @@ export class CartService {
   private cartItems = new BehaviorSubject<CartItem[]>([]);
   private cartSummary = new BehaviorSubject<CartSummary | null>(null);
   private cartItemCount = new BehaviorSubject<number>(0);
+  private cartTotalAmount = new BehaviorSubject<number>(0);
+  private showCartTotalPrice = new BehaviorSubject<boolean>(false);
+  private totalItemCount = new BehaviorSubject<number>(0); // Combined cart + wishlist count
   private isLoadingCart = false;
   private useLocalStorageOnly = false; // Temporary flag to disable API calls
 
   public cartItems$ = this.cartItems.asObservable();
   public cartSummary$ = this.cartSummary.asObservable();
   public cartItemCount$ = this.cartItemCount.asObservable();
+  public cartTotalAmount$ = this.cartTotalAmount.asObservable();
+  public showCartTotalPrice$ = this.showCartTotalPrice.asObservable();
+  public totalItemCount$ = this.totalItemCount.asObservable(); // Observable for total count
 
   constructor(
     private http: HttpClient,
@@ -63,13 +69,50 @@ export class CartService {
     return this.http.get<{ success: boolean; cart: any; summary: any }>(`${this.API_URL}/cart-new`, options);
   }
 
-  // Get cart count only (lightweight endpoint)
-  getCartCount(): Observable<{ success: boolean; count: number; totalItems: number; itemCount: number }> {
+  // Get cart count only (lightweight endpoint) - returns total quantities
+  getCartCount(): Observable<{ success: boolean; count: number; totalItems: number; itemCount: number; totalAmount: number; showTotalPrice: boolean }> {
     const token = localStorage.getItem('token');
     const options = token ? {
       headers: { 'Authorization': `Bearer ${token}` }
     } : {};
-    return this.http.get<{ success: boolean; count: number; totalItems: number; itemCount: number }>(`${this.API_URL}/cart-new/count`, options);
+    return this.http.get<{ success: boolean; count: number; totalItems: number; itemCount: number; totalAmount: number; showTotalPrice: boolean }>(`${this.API_URL}/cart-new/count`, options);
+  }
+
+  // Get total count for logged-in user (cart + wishlist)
+  getTotalCount(): Observable<any> {
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+    return this.http.get<any>(`${this.API_URL}/cart-new/total-count`, options);
+  }
+
+  // Debug cart data
+  debugCart(): Observable<any> {
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+    return this.http.get<any>(`${this.API_URL}/cart-new/debug`, options).pipe(
+      catchError(error => {
+        console.log('🔍 Debug endpoint not available, skipping debug');
+        return of({ success: false, message: 'Debug endpoint not available' });
+      })
+    );
+  }
+
+  // Recalculate cart totals
+  recalculateCart(): Observable<any> {
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+    return this.http.post<any>(`${this.API_URL}/cart-new/recalculate`, {}, options).pipe(
+      catchError(error => {
+        console.log('🔧 Recalculate endpoint not available, skipping recalculation');
+        return of({ success: false, message: 'Recalculate endpoint not available' });
+      })
+    );
   }
 
   // Load cart and update local state
@@ -117,15 +160,23 @@ export class CartService {
       next: (response) => {
         this.isLoadingCart = false;
         if (response.success && response.cart) {
-          this.cartItems.next(response.cart.items || []);
+          const items = response.cart.items || [];
+          this.cartItems.next(items);
           this.cartSummary.next(response.summary);
           this.updateCartCount();
-          console.log('✅ Cart loaded from API:', response.cart.items?.length || 0, 'items');
+          console.log('✅ Cart loaded from API:', items.length, 'items');
+          console.log('🛒 Cart items details:', items.map((item: any) => ({
+            id: item._id,
+            name: item.product?.name,
+            quantity: item.quantity,
+            price: item.product?.price
+          })));
         } else {
           // No cart data from API, initialize empty cart
           this.cartItems.next([]);
           this.cartSummary.next(null);
           this.updateCartCount();
+          console.log('❌ No cart data from API');
         }
       },
       error: (error) => {
@@ -196,30 +247,81 @@ export class CartService {
     this.loadCartFromAPI();
   }
 
-  // Method to refresh only cart count (lightweight)
-  refreshCartCount() {
+  // Method to refresh total count (cart + wishlist) for logged-in user
+  refreshTotalCount() {
     const token = localStorage.getItem('token');
     if (token) {
-      this.getCartCount().subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.cartItemCount.next(response.count);
-            console.log('🛒 Cart count refreshed:', response.count);
-          }
-        },
-        error: (error) => {
-          console.error('❌ Error refreshing cart count:', error);
-          if (error.status === 401) {
-            console.log('❌ Authentication failed, clearing token');
-            localStorage.removeItem('token');
-            this.cartItemCount.next(0);
-          }
-        }
-      });
+      // Skip debug for now and go directly to getting total count
+      console.log('🔄 Refreshing total count for logged-in user...');
+      this.getTotalCountAfterRecalculation();
     } else {
-      // No token, set count to 0
-      this.cartItemCount.next(0);
+      // No token, set all counts to 0
+      this.resetAllCounts();
     }
+  }
+
+  private getTotalCountAfterRecalculation() {
+    // Only refresh if user is authenticated
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('🔒 No authentication token, skipping cart count refresh');
+      this.resetAllCounts();
+      return;
+    }
+
+    this.getTotalCount().subscribe({
+      next: (response) => {
+        if (response.success) {
+          const data = response.data;
+
+          // Update cart count with TOTAL QUANTITY (not just item count)
+          this.cartItemCount.next(data.cart.quantityTotal || 0);
+          this.cartTotalAmount.next(data.cart.totalAmount || 0);
+          this.showCartTotalPrice.next(data.showCartTotalPrice || false);
+
+          // Update TOTAL COUNT (cart + wishlist)
+          this.totalItemCount.next(data.totalCount || 0);
+
+          console.log('🔢 Total count refreshed for user:', response.username, {
+            cartQuantityTotal: data.cart.quantityTotal,
+            cartItemCount: data.cart.itemCount,
+            wishlistItems: data.wishlist.itemCount,
+            totalCount: data.totalCount,
+            cartTotal: data.cart.totalAmount,
+            showPrice: data.showCartTotalPrice
+          });
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error refreshing total count:', error);
+        if (error.status === 401) {
+          console.log('❌ Authentication failed, clearing token');
+          localStorage.removeItem('token');
+          this.resetAllCounts();
+        } else if (error.status === 404) {
+          console.log('❌ Total count endpoint not found, using fallback');
+          // Fallback: Load cart directly to get counts
+          this.loadCartFromAPI();
+        } else {
+          // For other errors, reset counts to avoid showing stale data
+          this.resetAllCounts();
+        }
+      }
+    });
+  }
+
+  // Method to refresh only cart count (lightweight) - kept for backward compatibility
+  refreshCartCount() {
+    this.refreshTotalCount(); // Use the new total count method
+  }
+
+  // Reset all counts to 0
+  private resetAllCounts() {
+    this.cartItemCount.next(0);
+    this.cartTotalAmount.next(0);
+    this.showCartTotalPrice.next(false);
+    this.totalItemCount.next(0);
+    console.log('🔄 All counts reset to 0');
   }
 
   // Method to clear cart on logout
@@ -227,7 +329,7 @@ export class CartService {
     console.log('🔄 Clearing cart on logout...');
     this.cartItems.next([]);
     this.cartSummary.next(null);
-    this.cartItemCount.next(0);
+    this.resetAllCounts();
   }
 
   // Temporary method to enable/disable API calls
@@ -437,8 +539,24 @@ export class CartService {
     }, 0);
   }
 
+  // Get total count (cart + wishlist items) for the logged-in user
+  getTotalItemCount(): number {
+    return this.totalItemCount.value;
+  }
+
+  // Get cart item count only
   getCartItemCount(): number {
     return this.cartItemCount.value;
+  }
+
+  // Get cart total amount
+  getCartTotalAmount(): number {
+    return this.cartTotalAmount.value;
+  }
+
+  // Check if cart total price should be displayed (when cart has 4+ products)
+  shouldShowCartTotalPrice(): boolean {
+    return this.showCartTotalPrice.value;
   }
 
   isInCart(productId: string, size?: string, color?: string): boolean {

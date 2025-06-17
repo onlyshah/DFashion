@@ -53,45 +53,43 @@
     </span>
   </div>
 
-  <!-- Total Count Display -->
+  <!-- Total Count Display (Cart + Wishlist for logged-in user) -->
   <div class="count-display">
     <div class="count-summary" *ngIf="authService.isAuthenticated">
       <div class="total-count">
         <i class="fas fa-shopping-bag"></i>
-        <span class="count-label">Total Items:</span>
+        <span class="count-label">Total Items (Cart + Wishlist):</span>
         <span class="count-value" [class.has-items]="hasItems()">
-          {{ getFormattedTotalCount() }}
+          {{ getTotalCount() }}
         </span>
       </div>
 
-      <div class="count-breakdown" *ngIf="hasItems()">
-        <div class="cart-count" *ngIf="getCartCount() > 0">
-          <i class="fas fa-shopping-cart"></i>
-          <span>Cart: {{ getCartCount() }}</span>
-        </div>
-        <div class="wishlist-count" *ngIf="getWishlistCount() > 0">
-          <i class="fas fa-heart"></i>
-          <span>Wishlist: {{ getWishlistCount() }}</span>
+      <!-- Cart Total Price Display (when cart has 4+ products) -->
+      <div class="cart-total-price" *ngIf="shouldShowCartTotalPrice()">
+        <div class="total-price-display">
+          <i class="fas fa-dollar-sign"></i>
+          <span class="price-label">Cart Total (4+ items):</span>
+          <span class="price-value">{{ getFormattedCartTotal() }}</span>
         </div>
       </div>
 
       <div class="empty-state" *ngIf="!hasItems()">
         <i class="fas fa-shopping-bag"></i>
-        <span class="empty-message">No items yet</span>
+        <span class="empty-message">No items in cart or wishlist</span>
       </div>
 
-      <!-- Detailed breakdown for debugging (can be removed in production) -->
-      <div class="debug-info" *ngIf="hasItems()" style="font-size: 10px; color: #666; margin-top: 4px;">
-        Cart: {{ getCountBreakdown().cart }} |
-        Wishlist: {{ getCountBreakdown().wishlist }} |
-        Total: {{ getCountBreakdown().total }}
+      <!-- User info for debugging -->
+      <div class="user-info" style="font-size: 10px; color: #666; margin-top: 4px;">
+        User: {{ authService.currentUserValue?.username || 'Unknown' }} |
+        Total Count: {{ getTotalCount() }} |
+        Show Price: {{ shouldShowCartTotalPrice() }}
       </div>
     </div>
 
     <!-- Guest User Message -->
     <div class="guest-message" *ngIf="!authService.isAuthenticated">
       <i class="fas fa-info-circle"></i>
-      <span>Login to see your cart and wishlist</span>
+      <span>Login to see your total items count</span>
       <div class="guest-count">
         <span class="count-value">0</span>
         <span class="count-label">items</span>

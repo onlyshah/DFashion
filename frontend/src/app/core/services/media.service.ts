@@ -42,8 +42,8 @@ export class MediaService {
     story: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRkVGM0Y0Ii8+CjxwYXRoIGQ9Ik0yMCAyOEMxNi42ODYzIDI4IDEzLjUwNTQgMjYuNjgzOSAxMS4xNzE2IDI0LjM1MDNDOC44Mzc4NCAyMi4wMTY3IDcuNTIxNzMgMTguODM1OCA3LjUyMTczIDE1LjUyMTdDNy41MjE3MyAxMi4yMDc2IDguODM3ODQgOS4wMjY3IDExLjE3MTYgNi42OTMwNEMxMy41MDU0IDQuMzU5MzggMTYuNjg2MyAzLjA0MzQ4IDIwIDMuMDQzNDhDMjMuMzEzNyAzLjA0MzQ4IDI2LjQ5NDYgNC4zNTkzOCAyOC44Mjg0IDYuNjkzMDRDMzEuMTYyMiA5LjAyNjcgMzIuNDc4MyAxMi4yMDc2IDMyLjQ3ODMgMTUuNTIxN0MzMi40NzgzIDE4LjgzNTggMzEuMTYyMiAyMi4wMTY3IDI4LjgyODQgMjQuMzUwM0MyNi40OTQ2IDI2LjY4MzkgMjMuMzEzNyAyOCAyMCAyOFoiIGZpbGw9IiNGQ0E1QTUiLz4KPC9zdmc+'
   };
 
-  // Video library - should be loaded from API
-  private readonly sampleVideos: any[] = [];
+  // Video library - loaded from API
+  private readonly videos: any[] = [];
 
   // Broken URL patterns to fix
   private readonly brokenUrlPatterns = [
@@ -122,7 +122,7 @@ export class MediaService {
           return this.getReplacementMediaUrl(url, type);
         }
         if (pattern === 'sample-videos.com') {
-          return this.getRandomSampleVideo().url;
+          return this.getReliableFallback(type);
         }
         if (pattern === 'localhost:4200/assets/') {
           // Extract the asset path and return it as relative
@@ -213,36 +213,11 @@ export class MediaService {
     return externalDomains.some(domain => url.includes(domain));
   }
 
-  /**
-   * Get a random sample video with enhanced metadata
-   */
-  getRandomSampleVideo(): { url: string; thumbnail: string; duration: number; title?: string; description?: string } {
-    const randomIndex = Math.floor(Math.random() * this.sampleVideos.length);
-    return this.sampleVideos[randomIndex];
-  }
 
-  /**
-   * Get all sample videos with enhanced metadata
-   */
-  getSampleVideos(): { url: string; thumbnail: string; duration: number; title?: string; description?: string }[] {
-    return [...this.sampleVideos];
-  }
 
-  /**
-   * Get video by content type (for better matching)
-   */
-  getVideoByType(contentType: 'fashion' | 'style' | 'showcase' | 'tutorial' | 'story'): { url: string; thumbnail: string; duration: number; title?: string; description?: string } {
-    const typeMapping: { [key: string]: number } = {
-      'fashion': 0, // ForBiggerBlazes - Fashion Showcase
-      'style': 1,   // ForBiggerEscapes - Style Journey
-      'showcase': 2, // ForBiggerFun - Fashion Fun
-      'tutorial': 3, // ForBiggerJoyrides - Style Ride
-      'story': 5    // Sintel - Fashion Story
-    };
 
-    const index = typeMapping[contentType] || 0;
-    return this.sampleVideos[index] || this.sampleVideos[0];
-  }
+
+
 
   /**
    * Check if URL is a video
@@ -260,13 +235,7 @@ export class MediaService {
    * Get video thumbnail
    */
   getVideoThumbnail(videoUrl: string): string {
-    // Check if it's one of our sample videos
-    const sampleVideo = this.sampleVideos.find(v => v.url === videoUrl);
-    if (sampleVideo) {
-      return sampleVideo.thumbnail;
-    }
-
-    // For other videos, try to generate thumbnail URL or use fallback
+    // For videos, use fallback
     return this.fallbackImages.post;
   }
 
@@ -274,8 +243,7 @@ export class MediaService {
    * Get video duration
    */
   getVideoDuration(videoUrl: string): number {
-    const sampleVideo = this.sampleVideos.find(v => v.url === videoUrl);
-    return sampleVideo ? sampleVideo.duration : 30; // Default 30 seconds
+    return 30; // Default 30 seconds
   }
 
   /**
@@ -302,64 +270,7 @@ export class MediaService {
     });
   }
 
-  /**
-   * Add sample videos to existing media array with intelligent content matching
-   */
-  enhanceWithSampleVideos(mediaArray: any[], videoCount: number = 2, contentHint?: string): MediaItem[] {
-    const processedMedia = this.processMediaItems(mediaArray);
 
-    // Add sample videos if we don't have enough media or if videos are broken
-    const needsVideoEnhancement = processedMedia.length < 3 ||
-      processedMedia.some(media => media.type === 'video' && this.isBrokenUrl(media.url));
-
-    if (needsVideoEnhancement) {
-      const videosToAdd = Math.min(videoCount, this.sampleVideos.length);
-
-      for (let i = 0; i < videosToAdd; i++) {
-        // Try to match video content to the hint
-        let sampleVideo;
-        if (contentHint) {
-          sampleVideo = this.getVideoByContentHint(contentHint, i);
-        } else {
-          sampleVideo = this.sampleVideos[i];
-        }
-
-        processedMedia.push({
-          id: `enhanced_video_${i}`,
-          type: 'video',
-          url: sampleVideo.url,
-          thumbnailUrl: sampleVideo.thumbnail,
-          alt: sampleVideo.title || `Enhanced video ${i + 1}`,
-          duration: sampleVideo.duration,
-          aspectRatio: 16/9
-        });
-      }
-    }
-
-    return processedMedia;
-  }
-
-  /**
-   * Get video based on content hint for better matching
-   */
-  private getVideoByContentHint(hint: string, fallbackIndex: number = 0): any {
-    const lowerHint = hint.toLowerCase();
-
-    if (lowerHint.includes('fashion') || lowerHint.includes('style')) {
-      return this.getVideoByType('fashion');
-    }
-    if (lowerHint.includes('tutorial') || lowerHint.includes('tips')) {
-      return this.getVideoByType('tutorial');
-    }
-    if (lowerHint.includes('showcase') || lowerHint.includes('collection')) {
-      return this.getVideoByType('showcase');
-    }
-    if (lowerHint.includes('story') || lowerHint.includes('behind')) {
-      return this.getVideoByType('story');
-    }
-
-    return this.sampleVideos[fallbackIndex] || this.sampleVideos[0];
-  }
 
   /**
    * Check if URL is broken

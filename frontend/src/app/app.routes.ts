@@ -22,6 +22,13 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
 
+  // Explore Routes
+  {
+    path: 'explore',
+    loadComponent: () => import('./features/explore/explore.component').then(m => m.ExploreComponent),
+    title: 'Explore - DFashion'
+  },
+
   // Shop Routes
   {
     path: 'shop',
@@ -103,7 +110,7 @@ export const routes: Routes = [
   // Shopping Cart & Wishlist (will be created)
   {
     path: 'cart',
-    loadComponent: () => import('./features/checkout/checkout.component').then(m => m.CheckoutComponent),
+    loadComponent: () => import('./features/shop/pages/cart/cart.component').then(m => m.CartComponent),
     canActivate: [AuthGuard],
     title: 'Shopping Cart - DFashion'
   },

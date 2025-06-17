@@ -149,11 +149,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadMockData(): void {
-    // Load users from API
-    this.dataSource.data = [];
-    this.totalUsers = 0;
-  }
+
 
   onPageChange(): void {
     this.loadUsers();

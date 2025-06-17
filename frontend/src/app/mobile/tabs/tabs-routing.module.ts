@@ -20,6 +20,14 @@ const routes: Routes = [
         loadChildren: () => import('../stories/stories.module').then(m => m.StoriesPageModule)
       },
       {
+        path: 'posts',
+        loadChildren: () => import('../posts/posts.module').then(m => m.PostsPageModule)
+      },
+      {
+        path: 'wishlist',
+        loadChildren: () => import('../wishlist/wishlist.module').then(m => m.WishlistPageModule)
+      },
+      {
         path: 'cart',
         loadChildren: () => import('../cart/cart.module').then(m => m.CartPageModule)
       },

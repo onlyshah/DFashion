@@ -44,6 +44,8 @@ export class ShoppingActionsComponent implements OnInit, OnDestroy {
   cartCount = 0;
   wishlistCount = 0;
   totalCount = 0;
+  cartTotalAmount = 0;
+  showCartTotalPrice = false;
 
   // Subscription management
   private subscriptions: Subscription[] = [];
@@ -84,55 +86,61 @@ export class ShoppingActionsComponent implements OnInit, OnDestroy {
     if (this.authService.isAuthenticated) {
       console.log('🔢 Initializing counts for authenticated user');
 
-      // Subscribe to cart count changes with error handling
-      const cartSub = this.cartService.cartItemCount$.subscribe({
+      // Subscribe to TOTAL count (cart + wishlist) from cart service
+      const totalCountSub = this.cartService.totalItemCount$.subscribe({
         next: (count: number) => {
-          this.cartCount = count || 0;
-          this.updateTotalCount();
-          console.log('🛒 Cart count updated:', this.cartCount);
+          this.totalCount = count || 0;
+          console.log('🔢 Total count updated:', this.totalCount);
         },
         error: (error) => {
-          console.error('❌ Error subscribing to cart count:', error);
-          this.cartCount = 0;
-          this.updateTotalCount();
+          console.error('❌ Error subscribing to total count:', error);
+          this.totalCount = 0;
         }
       });
-      this.subscriptions.push(cartSub);
+      this.subscriptions.push(totalCountSub);
 
-      // Subscribe to wishlist count changes with error handling
-      const wishlistSub = this.wishlistService.wishlistCount$.subscribe({
-        next: (count: number) => {
-          this.wishlistCount = count || 0;
-          this.updateTotalCount();
-          console.log('❤️ Wishlist count updated:', this.wishlistCount);
+      // Subscribe to cart total amount changes
+      const cartAmountSub = this.cartService.cartTotalAmount$.subscribe({
+        next: (amount: number) => {
+          this.cartTotalAmount = amount || 0;
+          console.log('💰 Cart total amount updated:', this.cartTotalAmount);
         },
         error: (error) => {
-          console.error('❌ Error subscribing to wishlist count:', error);
-          this.wishlistCount = 0;
-          this.updateTotalCount();
+          console.error('❌ Error subscribing to cart total amount:', error);
+          this.cartTotalAmount = 0;
         }
       });
-      this.subscriptions.push(wishlistSub);
+      this.subscriptions.push(cartAmountSub);
+
+      // Subscribe to cart price display flag
+      const cartPriceSub = this.cartService.showCartTotalPrice$.subscribe({
+        next: (showPrice: boolean) => {
+          this.showCartTotalPrice = showPrice || false;
+          console.log('💲 Show cart total price updated:', this.showCartTotalPrice);
+        },
+        error: (error) => {
+          console.error('❌ Error subscribing to cart price display:', error);
+          this.showCartTotalPrice = false;
+        }
+      });
+      this.subscriptions.push(cartPriceSub);
 
       // Load initial counts
       this.loadInitialCounts();
     } else {
       console.log('🔢 User not authenticated, setting counts to 0');
       // User not authenticated, set counts to 0
-      this.cartCount = 0;
-      this.wishlistCount = 0;
-      this.updateTotalCount();
+      this.totalCount = 0;
+      this.cartTotalAmount = 0;
+      this.showCartTotalPrice = false;
     }
   }
 
   // Load initial counts from services
   private loadInitialCounts() {
     try {
-      // Get current cart count
-      this.cartService.refreshCartCount();
-
-      // Trigger wishlist count refresh by subscribing to wishlist items
-      this.wishlistService.wishlistItems$.pipe().subscribe();
+      // Refresh total count (cart + wishlist)
+      this.cartService.refreshTotalCount();
     } catch (error) {
       console.error('❌ Error loading initial counts:', error);
     }
@@ -217,6 +225,28 @@ export class ShoppingActionsComponent implements OnInit, OnDestroy {
     };
   }
 
+  // Get cart total amount for display
+  getCartTotalAmount(): number {
+    if (!this.authService.isAuthenticated) {
+      return 0;
+    }
+    return this.cartTotalAmount || 0;
+  }
+
+  // Check if cart total price should be displayed
+  shouldShowCartTotalPrice(): boolean {
+    return this.authService.isAuthenticated && this.showCartTotalPrice;
+  }
+
+  // Get formatted cart total amount
+  getFormattedCartTotal(): string {
+    const amount = this.getCartTotalAmount();
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  }
+
   // Subscribe to authentication state changes
   private subscribeToAuthChanges() {
     // Re-initialize counts when authentication state changes
@@ -249,6 +279,8 @@ export class ShoppingActionsComponent implements OnInit, OnDestroy {
     this.cartCount = 0;
     this.wishlistCount = 0;
     this.totalCount = 0;
+    this.cartTotalAmount = 0;
+    this.showCartTotalPrice = false;
     this.isInCart = false;
     this.isInWishlist = false;
     this.updateTotalCount();

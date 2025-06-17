@@ -25,10 +25,7 @@ export class StoryService {
     return this.http.get<{ stories: Story[] }>(`${this.API_URL}/stories/user/${userId}`);
   }
 
-  private getMockStoriesForUser(userId: string): Story[] {
-    // Return empty array - stories should come from API
-    return [];
-  }
+
 
   createStory(storyData: CreateStoryRequest): Observable<{ message: string; story: Story }> {
     return this.http.post<{ message: string; story: Story }>(`${this.API_URL}/stories`, storyData);

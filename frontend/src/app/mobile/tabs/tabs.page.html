@@ -18,6 +18,19 @@
       <ion-label>Stories</ion-label>
     </ion-tab-button>
 
+    <!-- Posts Tab -->
+    <ion-tab-button tab="posts">
+      <ion-icon name="images"></ion-icon>
+      <ion-label>Posts</ion-label>
+    </ion-tab-button>
+
+    <!-- Wishlist Tab -->
+    <ion-tab-button tab="wishlist" *ngIf="isAuthenticated">
+      <ion-icon name="heart"></ion-icon>
+      <ion-label>Wishlist</ion-label>
+      <ion-badge color="danger" *ngIf="wishlistItemCount > 0">{{ wishlistItemCount }}</ion-badge>
+    </ion-tab-button>
+
     <!-- Cart Tab -->
     <ion-tab-button tab="cart" *ngIf="isAuthenticated">
       <ion-icon name="bag"></ion-icon>

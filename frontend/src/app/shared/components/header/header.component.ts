@@ -23,17 +23,29 @@ import { User } from '../../../core/models/user.model';
             </a>
           </div>
 
-          <!-- Search Bar -->
-          <div class="search-bar" (click)="openSearch()">
+          <!-- Global Search Bar -->
+          <div class="search-bar">
             <i class="fas fa-search"></i>
             <input
               type="text"
-              placeholder="Search for fashion, brands, and more..."
+              placeholder="Search products, brands, categories..."
               [(ngModel)]="searchQuery"
               (keyup.enter)="onSearch()"
-              (click)="openSearch()"
-              readonly
+              (input)="onSearchInput()"
+              (focus)="onSearchFocus()"
+              (blur)="onSearchBlur()"
             >
+            <!-- Search Suggestions Dropdown -->
+            <div class="search-suggestions" *ngIf="showSuggestions && searchSuggestions.length > 0">
+              <div
+                *ngFor="let suggestion of searchSuggestions"
+                class="suggestion-item"
+                (click)="selectSuggestion(suggestion)">
+                <i class="fas" [ngClass]="getSuggestionIcon(suggestion.type)"></i>
+                <span class="suggestion-text">{{ suggestion.text }}</span>
+                <span class="suggestion-type">{{ suggestion.type }}</span>
+              </div>
+            </div>
           </div>
 
           <!-- Navigation -->
@@ -42,7 +54,7 @@ import { User } from '../../../core/models/user.model';
               <i class="fas fa-home"></i>
               <span>Home</span>
             </a>
-            <a routerLink="/shop" routerLinkActive="active" class="nav-item">
+            <a routerLink="/explore" routerLinkActive="active" class="nav-item">
               <i class="fas fa-compass"></i>
               <span>Explore</span>
             </a>
@@ -50,16 +62,34 @@ import { User } from '../../../core/models/user.model';
               <i class="fas fa-shopping-bag"></i>
               <span>Shop</span>
             </a>
+            <!-- Wishlist Icon with Count -->
             <a routerLink="/wishlist" routerLinkActive="active" class="nav-item wishlist-item">
               <i class="fas fa-heart"></i>
               <span>Wishlist</span>
               <span class="wishlist-badge" *ngIf="wishlistItemCount > 0">{{ wishlistItemCount }}</span>
+              <span class="wishlist-badge zero" *ngIf="currentUser && wishlistItemCount === 0">0</span>
             </a>
+
+            <!-- Cart Icon with Count and Total Amount -->
             <a routerLink="/cart" routerLinkActive="active" class="nav-item cart-item">
               <i class="fas fa-shopping-cart"></i>
               <span>Cart</span>
               <span class="cart-badge" *ngIf="cartItemCount > 0">{{ cartItemCount }}</span>
+              <span class="cart-badge zero" *ngIf="currentUser && cartItemCount === 0">0</span>
+
+              <!-- Cart total amount display -->
+              <div class="cart-total-display" *ngIf="currentUser && cartTotalAmount > 0">
+                <span class="cart-total-text">{{ getFormattedCartTotal() }}</span>
+              </div>
             </a>
+
+            <!-- Total Count Display (Cart + Wishlist Combined) -->
+            <div class="total-count-item" *ngIf="currentUser">
+              <i class="fas fa-shopping-bag"></i>
+              <span>Total</span>
+              <span class="total-count-badge" *ngIf="getTotalItemCount() > 0">{{ getTotalItemCount() }}</span>
+              <span class="total-count-badge zero" *ngIf="getTotalItemCount() === 0">0</span>
+            </div>
 
             <!-- User Menu for logged in users -->
             <div *ngIf="currentUser" class="user-menu" (click)="toggleUserMenu()">
@@ -164,6 +194,59 @@ import { User } from '../../../core/models/user.model';
       color: #8e8e8e;
     }
 
+    .search-suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      z-index: 1000;
+      margin-top: 5px;
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background-color 0.2s ease;
+    }
+
+    .suggestion-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-item i {
+      color: #6c757d;
+      margin-right: 12px;
+      width: 16px;
+      position: static;
+      transform: none;
+    }
+
+    .suggestion-text {
+      flex: 1;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .suggestion-type {
+      font-size: 12px;
+      color: #6c757d;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
     .nav-menu {
       display: flex;
       align-items: center;
@@ -211,6 +294,87 @@ import { User } from '../../../core/models/user.model';
       min-width: 16px;
       text-align: center;
       line-height: 1.2;
+    }
+
+    .cart-badge.zero,
+    .wishlist-badge.zero {
+      background: #6c757d;
+    }
+
+    .total-count-item {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: linear-gradient(135deg, #4834d4, #686de0);
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-left: 16px;
+    }
+
+    .total-count-item i {
+      font-size: 16px;
+    }
+
+    .total-count-badge {
+      background: #28a745;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      min-width: 20px;
+      text-align: center;
+      margin-left: auto;
+    }
+
+    .total-count-badge.zero {
+      background: #6c757d;
+    }
+
+    .cart-total-display {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: #28a745;
+      color: white;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 4px;
+      border-radius: 4px;
+      white-space: nowrap;
+      margin-top: 2px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .cart-total-text {
+      font-size: 9px;
+    }
+
+    .total-count-display {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: linear-gradient(135deg, #4834d4, #686de0);
+      color: white;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .total-count-display i {
+      font-size: 12px;
+    }
+
+    .total-count-text {
+      font-size: 12px;
+      min-width: 16px;
+      text-align: center;
     }
 
     .auth-buttons {
@@ -346,17 +510,58 @@ import { User } from '../../../core/models/user.model';
       .search-bar {
         display: none;
       }
-      
+
       .nav-menu {
         gap: 16px;
       }
-      
+
       .nav-item span {
         display: none;
       }
 
       .username {
         display: none;
+      }
+
+      .cart-item,
+      .wishlist-item {
+        position: relative;
+      }
+
+      .cart-badge,
+      .wishlist-badge {
+        font-size: 8px;
+        padding: 1px 4px;
+        min-width: 12px;
+      }
+
+      .total-count-item {
+        padding: 6px 8px;
+        font-size: 12px;
+        margin-left: 8px;
+      }
+
+      .total-count-item span:not(.total-count-badge) {
+        display: none;
+      }
+
+      .total-count-item i {
+        font-size: 14px;
+      }
+
+      .total-count-badge {
+        font-size: 10px;
+        padding: 1px 6px;
+        min-width: 16px;
+      }
+
+      .cart-total-display {
+        font-size: 8px;
+        padding: 1px 3px;
+      }
+
+      .cart-total-text {
+        font-size: 8px;
       }
     }
   `]
@@ -367,6 +572,14 @@ export class HeaderComponent implements OnInit {
   showUserMenu = false;
   cartItemCount = 0;
   wishlistItemCount = 0;
+  totalItemCount = 0;
+  cartTotalAmount = 0;
+  showCartTotalPrice = false;
+
+  // Search functionality
+  showSuggestions = false;
+  searchSuggestions: any[] = [];
+  searchTimeout: any;
 
   constructor(
     private authService: AuthService,
@@ -381,27 +594,54 @@ export class HeaderComponent implements OnInit {
       const wasLoggedOut = !this.currentUser;
       this.currentUser = user;
 
-      // If user just logged in, refresh cart and wishlist
+      // If user just logged in, refresh total count
       if (user && wasLoggedOut) {
-        console.log('🔄 User logged in, refreshing cart and wishlist...');
+        console.log('🔄 User logged in, refreshing total count...');
         setTimeout(() => {
-          this.cartService.refreshCartOnLogin();
-          this.wishlistService.refreshWishlistOnLogin();
+          this.cartService.refreshTotalCount();
         }, 100);
+      } else if (!user && !wasLoggedOut) {
+        // User logged out, reset total count
+        console.log('🔄 User logged out, resetting total count...');
+        this.totalItemCount = 0;
       }
     });
 
-    // Subscribe to cart count
+    // Subscribe to individual cart count
     this.cartService.cartItemCount$.subscribe((count: number) => {
       this.cartItemCount = count;
       console.log('🛒 Header cart count updated:', count);
     });
 
-    // Subscribe to wishlist count
+    // Subscribe to individual wishlist count
     this.wishlistService.wishlistItemCount$.subscribe((count: number) => {
       this.wishlistItemCount = count;
       console.log('💝 Header wishlist count updated:', count);
     });
+
+    // Subscribe to total count (cart + wishlist)
+    this.cartService.totalItemCount$.subscribe((count: number) => {
+      this.totalItemCount = count;
+      console.log('🔢 Header total count updated:', count);
+    });
+
+    // Subscribe to cart total amount
+    this.cartService.cartTotalAmount$.subscribe((amount: number) => {
+      this.cartTotalAmount = amount;
+      console.log('💰 Header cart total amount updated:', amount);
+    });
+
+    // Subscribe to cart price display flag
+    this.cartService.showCartTotalPrice$.subscribe((showPrice: boolean) => {
+      this.showCartTotalPrice = showPrice;
+      console.log('💲 Header show cart total price updated:', showPrice);
+    });
+
+    // Refresh counts when user logs in
+    if (this.currentUser) {
+      this.cartService.refreshTotalCount();
+      this.wishlistService.refreshWishlistOnLogin();
+    }
 
     // Load cart and wishlist on init
     this.cartService.loadCart();
@@ -424,15 +664,102 @@ export class HeaderComponent implements OnInit {
     this.router.navigate(['/search']);
   }
 
+  // Get total count for display (cart + wishlist items for logged-in user)
+  getTotalItemCount(): number {
+    if (!this.currentUser) {
+      return 0; // Return 0 if user is not logged in
+    }
+    return this.totalItemCount || 0;
+  }
+
+  // Get formatted cart total amount
+  getFormattedCartTotal(): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(this.cartTotalAmount || 0);
+  }
+
+  // Check if cart total price should be displayed
+  shouldShowCartTotalPrice(): boolean {
+    return this.currentUser !== null && this.showCartTotalPrice;
+  }
+
   onSearch() {
     if (this.searchQuery.trim()) {
       this.router.navigate(['/search'], {
         queryParams: { q: this.searchQuery }
       });
-      this.searchQuery = ''; // Clear search after navigation
+      this.hideSuggestions();
     } else {
       this.router.navigate(['/search']);
     }
+  }
+
+  onSearchInput() {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
+    this.searchTimeout = setTimeout(() => {
+      if (this.searchQuery.trim().length > 2) {
+        this.loadSearchSuggestions();
+      } else {
+        this.hideSuggestions();
+      }
+    }, 300);
+  }
+
+  onSearchFocus() {
+    if (this.searchQuery.trim().length > 2) {
+      this.showSuggestions = true;
+    }
+  }
+
+  onSearchBlur() {
+    // Delay hiding to allow clicking on suggestions
+    setTimeout(() => {
+      this.hideSuggestions();
+    }, 200);
+  }
+
+  loadSearchSuggestions() {
+    // Simulate API call for search suggestions
+    const query = this.searchQuery.toLowerCase();
+
+    // Mock suggestions based on query
+    this.searchSuggestions = [
+      { text: `${this.searchQuery} in Products`, type: 'product', icon: 'fa-shopping-bag' },
+      { text: `${this.searchQuery} in Brands`, type: 'brand', icon: 'fa-tags' },
+      { text: `${this.searchQuery} in Categories`, type: 'category', icon: 'fa-list' }
+    ];
+
+    this.showSuggestions = true;
+  }
+
+  selectSuggestion(suggestion: any) {
+    this.searchQuery = suggestion.text;
+    this.router.navigate(['/search'], {
+      queryParams: {
+        q: this.searchQuery,
+        type: suggestion.type
+      }
+    });
+    this.hideSuggestions();
+  }
+
+  getSuggestionIcon(type: string): string {
+    switch (type) {
+      case 'product': return 'fa-shopping-bag';
+      case 'brand': return 'fa-tags';
+      case 'category': return 'fa-list';
+      default: return 'fa-search';
+    }
+  }
+
+  hideSuggestions() {
+    this.showSuggestions = false;
+    this.searchSuggestions = [];
   }
 
   logout() {

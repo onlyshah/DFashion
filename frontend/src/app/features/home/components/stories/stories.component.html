@@ -11,12 +11,14 @@
     </div>
 
     <!-- Stories Slider Container -->
-    <div class="stories-slider" 
+    <div class="stories-slider"
          #storiesSlider
          (touchstart)="onTouchStart($event)"
          (touchmove)="onTouchMove($event)"
          (touchend)="onTouchEnd($event)"
-         (scroll)="onScroll()">
+         (scroll)="onScroll()"
+         (mouseenter)="onMouseEnter()"
+         (mouseleave)="onMouseLeave()">
       
       <!-- Stories Track -->
       <div class="stories-track" 
@@ -34,7 +36,7 @@
         </div>
 
         <!-- User Stories -->
-        <div 
+        <div
           *ngFor="let storyGroup of storyGroups; let i = index"
           class="story-slide"
           (click)="openStoryViewer(storyGroup)"
@@ -49,7 +51,23 @@
           </div>
           <span class="story-username">{{ storyGroup.user.username }}</span>
         </div>
+
+        <!-- Loading More Stories -->
+        <div *ngIf="isLoadingMore" class="story-slide loading-slide">
+          <div class="story-avatar">
+            <div class="avatar-ring loading-ring">
+              <div class="loading-spinner"></div>
+            </div>
+          </div>
+          <span class="story-username">Loading...</span>
+        </div>
       </div>
+    </div>
+
+    <!-- Auto-slide Indicator -->
+    <div class="auto-slide-indicator" *ngIf="isAutoSliding && storyGroups.length > slidesPerView">
+      <div class="slide-progress"></div>
+      <span class="slide-text">Auto-sliding</span>
     </div>
 
     <!-- Navigation Arrows (Desktop/Tablet) -->

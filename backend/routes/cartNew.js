@@ -4,57 +4,229 @@ const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const { auth, requireRole } = require('../middleware/auth');
 
-// Test endpoint to check if routes are working
-router.get('/test', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Cart routes are working',
-    timestamp: new Date().toISOString()
-  });
-});
 
-// Test endpoint with auth
-router.get('/test-auth', auth, (req, res) => {
-  res.json({
-    success: true,
-    message: 'Cart auth is working',
-    user: req.user.email,
-    role: req.user.role,
-    timestamp: new Date().toISOString()
-  });
+
+// Debug endpoint to see raw cart data
+router.get('/debug', auth, requireRole(['customer']), async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ user: req.user._id, isActive: true });
+
+    res.json({
+      success: true,
+      debug: {
+        cartExists: !!cart,
+        cartId: cart?._id,
+        userId: req.user._id,
+        username: req.user.username,
+        storedTotalItems: cart?.totalItems,
+        storedTotalAmount: cart?.totalAmount,
+        itemsCount: cart?.items?.length || 0,
+        items: cart?.items?.map(item => ({
+          id: item._id,
+          product: item.product,
+          quantity: item.quantity,
+          price: item.price,
+          originalPrice: item.originalPrice,
+          calculatedTotal: item.price * item.quantity
+        })) || [],
+        calculatedTotalAmount: cart?.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0
+      }
+    });
+  } catch (error) {
+    console.error('Debug cart error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Debug failed',
+      error: error.message
+    });
+  }
 });
 
 // Get cart count only (lightweight endpoint)
 router.get('/count', auth, requireRole(['customer']), async (req, res) => {
   try {
     const cart = await Cart.findOne({ user: req.user._id, isActive: true })
-      .select('totalItems items');
+      .select('totalItems items totalAmount');
 
     if (!cart) {
       return res.json({
         success: true,
         count: 0,
         totalItems: 0,
-        itemCount: 0
+        itemCount: 0,
+        totalAmount: 0,
+        showTotalPrice: false
       });
     }
 
-    // Calculate accurate counts
+    // Calculate accurate counts from actual items
     const totalItems = cart.items.reduce((total, item) => total + item.quantity, 0);
     const itemCount = cart.items.length;
+    const totalAmount = cart.totalAmount || 0;
+
+    // Debug logging
+    console.log('🔍 Cart count debug for user:', req.user.username, {
+      cartId: cart._id,
+      storedTotalItems: cart.totalItems,
+      calculatedTotalItems: totalItems,
+      itemCount: itemCount,
+      storedTotalAmount: cart.totalAmount,
+      items: cart.items.map(item => ({
+        id: item._id,
+        product: item.product,
+        quantity: item.quantity,
+        price: item.price,
+        originalPrice: item.originalPrice
+      }))
+    });
+
+    // Show total price if cart has 4 or more items
+    const showTotalPrice = itemCount >= 4;
 
     res.json({
       success: true,
-      count: totalItems, // Total quantity of all items
+      count: totalItems, // Total quantity of all items (calculated fresh)
       totalItems: totalItems,
       itemCount: itemCount, // Number of unique items
-      lastUpdated: cart.lastUpdated
+      totalAmount: totalAmount,
+      showTotalPrice: showTotalPrice,
+      lastUpdated: cart.lastUpdated,
+      debug: {
+        storedTotalItems: cart.totalItems,
+        calculatedTotalItems: totalItems,
+        itemsInCart: cart.items.length
+      }
     });
   } catch (error) {
     console.error('Get cart count error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch cart count',
+      error: error.message
+    });
+  }
+});
+
+// Recalculate cart totals (fix inconsistent data)
+router.post('/recalculate', auth, requireRole(['customer']), async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ user: req.user._id, isActive: true });
+
+    if (!cart) {
+      return res.json({
+        success: true,
+        message: 'No cart found to recalculate'
+      });
+    }
+
+    // Store old values for comparison
+    const oldTotalItems = cart.totalItems;
+    const oldTotalAmount = cart.totalAmount;
+
+    // Force recalculation
+    cart.calculateTotals();
+    await cart.save();
+
+    console.log('🔧 Cart recalculated for user:', req.user.username, {
+      itemsCount: cart.items.length,
+      oldTotalItems: oldTotalItems,
+      newTotalItems: cart.totalItems,
+      oldTotalAmount: oldTotalAmount,
+      newTotalAmount: cart.totalAmount,
+      itemDetails: cart.items.map(item => ({
+        id: item._id,
+        quantity: item.quantity,
+        price: item.price,
+        itemTotal: item.price * item.quantity
+      }))
+    });
+
+    res.json({
+      success: true,
+      message: 'Cart totals recalculated successfully',
+      data: {
+        itemsCount: cart.items.length,
+        totalItems: cart.totalItems,
+        totalAmount: cart.totalAmount,
+        changes: {
+          totalItemsChanged: oldTotalItems !== cart.totalItems,
+          totalAmountChanged: oldTotalAmount !== cart.totalAmount,
+          oldValues: { totalItems: oldTotalItems, totalAmount: oldTotalAmount },
+          newValues: { totalItems: cart.totalItems, totalAmount: cart.totalAmount }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Recalculate cart error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to recalculate cart',
+      error: error.message
+    });
+  }
+});
+
+// Get combined cart and wishlist total count for specific user
+router.get('/total-count', auth, requireRole(['customer']), async (req, res) => {
+  try {
+    console.log('🔢 Getting total count for user:', req.user._id, 'Username:', req.user.username);
+
+    // Get cart data for this specific user
+    const cart = await Cart.findOne({ user: req.user._id, isActive: true })
+      .select('totalItems items totalAmount');
+
+    // Get wishlist data for this specific user
+    const Wishlist = require('../models/Wishlist');
+    const wishlist = await Wishlist.findOne({ user: req.user._id })
+      .select('totalItems items');
+
+    // Calculate cart data
+    const cartItemCount = cart ? cart.items.length : 0;
+    const cartQuantityTotal = cart ? cart.items.reduce((total, item) => total + item.quantity, 0) : 0;
+    const cartTotalAmount = cart ? cart.totalAmount || 0 : 0;
+
+    // Calculate wishlist data
+    const wishlistItemCount = wishlist ? wishlist.items.length : 0;
+
+    // Calculate TOTAL COUNT (cart items + wishlist items)
+    const totalCount = cartItemCount + wishlistItemCount;
+
+    // Show cart total price if cart has 4 or more PRODUCTS (not quantities)
+    const showCartTotalPrice = cartItemCount >= 4;
+
+    console.log('🔢 Total count calculation for user', req.user.username, ':', {
+      cartItems: cartItemCount,
+      wishlistItems: wishlistItemCount,
+      totalCount: totalCount,
+      cartTotalAmount: cartTotalAmount,
+      showCartTotalPrice: showCartTotalPrice
+    });
+
+    res.json({
+      success: true,
+      userId: req.user._id,
+      username: req.user.username,
+      data: {
+        cart: {
+          itemCount: cartItemCount,
+          quantityTotal: cartQuantityTotal,
+          totalAmount: cartTotalAmount
+        },
+        wishlist: {
+          itemCount: wishlistItemCount
+        },
+        totalCount: totalCount,
+        showCartTotalPrice: showCartTotalPrice,
+        cartTotalAmount: showCartTotalPrice ? cartTotalAmount : 0
+      },
+      lastUpdated: new Date()
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting total count for user:', req.user._id, error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get total count',
       error: error.message
     });
   }

@@ -289,30 +289,10 @@ export class CategoryComponent implements OnInit {
 
   loadProducts() {
     this.isLoading = true;
-    // Mock data for now
-    setTimeout(() => {
-      this.products = [
-        {
-          _id: '1',
-          name: 'Summer Dress',
-          brand: 'Fashion Studio',
-          price: 2499,
-          originalPrice: 3499,
-          images: [{ url: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=300' }],
-          rating: { average: 4.5, count: 128 }
-        },
-        {
-          _id: '2',
-          name: 'Classic Shirt',
-          brand: 'Urban Style',
-          price: 1899,
-          images: [{ url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300' }],
-          rating: { average: 4.2, count: 89 }
-        }
-      ];
-      this.productCount = this.products.length;
-      this.isLoading = false;
-    }, 1000);
+    // Load from real API
+    this.products = [];
+    this.productCount = 0;
+    this.isLoading = false;
   }
 
   viewProduct(productId: string) {

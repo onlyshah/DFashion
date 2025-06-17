@@ -44,6 +44,17 @@ export class StoriesComponent implements OnInit, AfterViewInit {
   slidesPerView = 1;
   slideWidth = 0;
 
+  // Auto-slide properties
+  autoSlideInterval: any;
+  autoSlideDelay = 3000; // 3 seconds
+  isAutoSliding = true;
+
+  // Auto-loading properties
+  isLoadingMore = false;
+  hasMoreStories = true;
+  currentPage = 1;
+  storiesPerPage = 10;
+
   constructor(
     private storyService: StoryService,
     private authService: AuthService,
@@ -64,6 +75,7 @@ export class StoriesComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.calculateResponsiveSettings();
       this.updateSliderState();
+      this.startAutoSlide();
     }, 100);
 
     // Add resize listener for responsive updates
@@ -71,6 +83,10 @@ export class StoriesComponent implements OnInit, AfterViewInit {
       this.calculateResponsiveSettings();
       this.updateSliderState();
     });
+  }
+
+  ngOnDestroy() {
+    this.stopAutoSlide();
   }
 
   calculateResponsiveSettings() {
@@ -118,42 +134,135 @@ export class StoriesComponent implements OnInit, AfterViewInit {
     }
   }
 
-  loadStories() {
-    this.storyService.getStories().subscribe({
+  loadStories(page: number = 1, append: boolean = false) {
+    if (this.isLoadingMore) return;
+
+    this.isLoadingMore = true;
+
+    this.storyService.getStories(page, this.storiesPerPage).subscribe({
       next: (response) => {
-        this.storyGroups = response.storyGroups;
-        // Update slider after stories load
-        setTimeout(() => {
-          this.calculateResponsiveSettings();
-          this.updateSliderState();
-        }, 100);
+        if (response.storyGroups && response.storyGroups.length > 0) {
+          if (append) {
+            this.storyGroups = [...this.storyGroups, ...response.storyGroups];
+          } else {
+            this.storyGroups = response.storyGroups;
+          }
+
+          // Check if there are more stories
+          this.hasMoreStories = response.storyGroups.length === this.storiesPerPage;
+
+          // Update slider after stories load
+          setTimeout(() => {
+            this.calculateResponsiveSettings();
+            this.updateSliderState();
+            if (!append) {
+              this.startAutoSlide();
+            }
+          }, 100);
+        } else {
+          console.log('No stories available from database');
+          if (!append) {
+            this.storyGroups = [];
+          }
+          this.hasMoreStories = false;
+        }
+        this.isLoadingMore = false;
       },
       error: (error) => {
         console.error('Error loading stories:', error);
-        this.storyGroups = [];
+        if (!append) {
+          this.storyGroups = [];
+        }
+        this.hasMoreStories = false;
+        this.isLoadingMore = false;
       }
     });
+  }
+
+  loadMoreStories() {
+    if (this.hasMoreStories && !this.isLoadingMore) {
+      this.currentPage++;
+      this.loadStories(this.currentPage, true);
+    }
+  }
+
+  // Auto-slide methods
+  startAutoSlide() {
+    if (this.storyGroups.length <= this.slidesPerView) return; // No need to auto-slide if all stories fit
+
+    this.stopAutoSlide(); // Clear any existing interval
+    this.autoSlideInterval = setInterval(() => {
+      if (this.isAutoSliding) {
+        this.autoSlideNext();
+      }
+    }, this.autoSlideDelay);
+  }
+
+  stopAutoSlide() {
+    if (this.autoSlideInterval) {
+      clearInterval(this.autoSlideInterval);
+      this.autoSlideInterval = null;
+    }
+  }
+
+  pauseAutoSlide() {
+    this.isAutoSliding = false;
+  }
+
+  resumeAutoSlide() {
+    this.isAutoSliding = true;
+  }
+
+  autoSlideNext() {
+    const maxSlide = this.getMaxSlide();
+    if (this.currentSlide < maxSlide) {
+      this.slideRight();
+    } else {
+      // Check if we need to load more stories
+      if (this.hasMoreStories && !this.isLoadingMore) {
+        this.loadMoreStories();
+      } else {
+        // Reset to beginning
+        this.currentSlide = 0;
+        this.updateSliderPosition();
+      }
+    }
   }
 
   // Slider navigation methods
   slideLeft() {
     if (this.canSlideLeft) {
+      this.pauseAutoSlide();
       this.currentSlide = Math.max(0, this.currentSlide - 1);
       this.updateSliderPosition();
+      // Resume auto-slide after user interaction
+      setTimeout(() => this.resumeAutoSlide(), 5000);
     }
   }
 
   slideRight() {
     if (this.canSlideRight) {
+      this.pauseAutoSlide();
       const maxSlide = this.getMaxSlide();
       this.currentSlide = Math.min(maxSlide, this.currentSlide + 1);
       this.updateSliderPosition();
+
+      // Check if we're near the end and need to load more
+      if (this.currentSlide >= maxSlide - 1 && this.hasMoreStories && !this.isLoadingMore) {
+        this.loadMoreStories();
+      }
+
+      // Resume auto-slide after user interaction
+      setTimeout(() => this.resumeAutoSlide(), 5000);
     }
   }
 
   goToSlide(slideIndex: number) {
+    this.pauseAutoSlide();
     this.currentSlide = slideIndex;
     this.updateSliderPosition();
+    // Resume auto-slide after user interaction
+    setTimeout(() => this.resumeAutoSlide(), 5000);
   }
 
   updateSliderPosition() {
@@ -188,6 +297,7 @@ export class StoriesComponent implements OnInit, AfterViewInit {
     this.touchStartX = event.touches[0].clientX;
     this.touchCurrentX = this.touchStartX;
     this.isDragging = true;
+    this.pauseAutoSlide();
   }
 
   onTouchMove(event: TouchEvent) {
@@ -216,6 +326,9 @@ export class StoriesComponent implements OnInit, AfterViewInit {
         // Swipe left - go to next slide
         this.slideRight();
       }
+    } else {
+      // Resume auto-slide if no significant swipe
+      setTimeout(() => this.resumeAutoSlide(), 2000);
     }
 
     this.isDragging = false;
@@ -232,7 +345,21 @@ export class StoriesComponent implements OnInit, AfterViewInit {
 
 
 
+  openStoryViewer(storyGroup: StoryGroup) {
+    // Navigate to story viewer with the selected story group
+    this.router.navigate(['/stories', storyGroup.user._id], {
+      queryParams: {
+        storyId: storyGroup.stories[0]._id,
+        source: 'home'
+      }
+    });
+  }
+
   openAddStory() {
+    if (!this.currentUser) {
+      this.router.navigate(['/login']);
+      return;
+    }
     this.showStoryCreationModal();
   }
 
@@ -625,12 +752,22 @@ export class StoriesComponent implements OnInit, AfterViewInit {
     document.body.appendChild(previewModal);
   }
 
-  openStoryViewer(storyGroup: StoryGroup) {
-    if (storyGroup.stories.length > 0) {
-      // Navigate to story viewer with user ID and start from first story
-      this.router.navigate(['/story', storyGroup.user._id, 0]);
-    } else {
-      console.log('No stories available for:', storyGroup.user.username);
-    }
+
+
+
+
+
+
+
+
+  // Mouse hover events for desktop
+  onMouseEnter() {
+    this.pauseAutoSlide();
   }
+
+  onMouseLeave() {
+    this.resumeAutoSlide();
+  }
+
+
 }

@@ -41,24 +41,10 @@ interface Story {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="stories-viewer" *ngIf="currentStory" (click)="handleStoryClick($event)">
-      <!-- Header -->
-      <div class="story-header">
-        <div class="user-info">
-          <img [src]="currentStory.user.avatar || '/assets/images/default-avatar.png'" 
-               [alt]="currentStory.user.fullName" class="user-avatar">
-          <div class="user-details">
-            <span class="username">{{ currentStory.user.username }}</span>
-            <span class="timestamp">{{ getTimeAgo(currentStory.createdAt) }}</span>
-          </div>
-        </div>
-        
-        <div class="story-controls">
-          <button class="btn-close" (click)="closeStories()">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </div>
+    <div class="stories-viewer" *ngIf="currentStory"
+         (click)="handleStoryClick($event)"
+         (keydown)="handleKeyDown($event)"
+         tabindex="0">
 
       <!-- Progress Bars -->
       <div class="progress-container">
@@ -68,7 +54,99 @@ interface Story {
              [class.completed]="i < currentIndex">
           <div class="progress-fill"
                [style.width.%]="getProgressWidth(i)"
-               [style.animation-duration.s]="story.media.duration"></div>
+               [style.animation-duration.s]="getStoryDuration(story)"></div>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="story-header">
+        <div class="user-info">
+          <img [src]="currentStory.user.avatar || '/assets/images/default-avatar.png'"
+               [alt]="currentStory.user.fullName" class="user-avatar">
+          <div class="user-details">
+            <span class="username">{{ currentStory.user.username }}</span>
+            <span class="timestamp">{{ getTimeAgo(currentStory.createdAt) }}</span>
+          </div>
+        </div>
+
+        <div class="story-controls">
+          <button class="btn-sound"
+                  *ngIf="currentStory.media.type === 'video'"
+                  (click)="toggleSound()"
+                  [class.muted]="isMuted">
+            <i class="fas" [class.fa-volume-up]="!isMuted" [class.fa-volume-mute]="isMuted"></i>
+          </button>
+          <button class="btn-pause" (click)="togglePause()" [class.paused]="isPaused">
+            <i class="fas" [class.fa-pause]="!isPaused" [class.fa-play]="isPaused"></i>
+          </button>
+          <button class="btn-close" (click)="closeStories()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Story Content -->
+      <div class="story-content"
+           (touchstart)="onTouchStart($event)"
+           (touchend)="onTouchEnd($event)"
+           (mousedown)="onMouseDown($event)"
+           (mouseup)="onMouseUp($event)">
+
+        <!-- Navigation Areas -->
+        <div class="nav-area nav-prev" (click)="previousStory()"></div>
+        <div class="nav-area nav-next" (click)="nextStory()"></div>
+
+        <!-- Image Story -->
+        <img *ngIf="currentStory.media.type === 'image'"
+             [src]="currentStory.media.url"
+             [alt]="currentStory.caption"
+             class="story-media"
+             (load)="onMediaLoaded()"
+             #storyMedia>
+
+        <!-- Video Story -->
+        <video *ngIf="currentStory.media.type === 'video'"
+               [src]="currentStory.media.url"
+               class="story-media"
+               [poster]="currentStory.media.thumbnail"
+               [muted]="isMuted"
+               [autoplay]="!isPaused"
+               [loop]="false"
+               #storyVideo
+               (loadeddata)="onMediaLoaded()"
+               (ended)="nextStory()">
+        </video>
+
+        <!-- Product Tags (Instagram-style) -->
+        <div class="product-tags"
+             [class.show-tags]="showProductTags"
+             *ngIf="currentStory.products && currentStory.products.length > 0">
+          <div class="product-tag"
+               *ngFor="let productTag of currentStory.products"
+               [style.left.%]="productTag.position.x"
+               [style.top.%]="productTag.position.y"
+               (click)="showProductModal(productTag.product); $event.stopPropagation()">
+            <div class="product-dot">
+              <div class="product-pulse"></div>
+            </div>
+            <div class="product-info">
+              <span class="product-name">{{ productTag.product.name }}</span>
+              <span class="product-price">₹{{ productTag.product.price | number:'1.0-0' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shopping indicator -->
+        <div class="shopping-indicator"
+             *ngIf="currentStory.products && currentStory.products.length > 0 && !showProductTags"
+             (click)="toggleProductTags(); $event.stopPropagation()">
+          <i class="fas fa-shopping-bag"></i>
+          <span>Tap to view products</span>
+        </div>
+
+        <!-- Caption -->
+        <div class="story-caption" *ngIf="currentStory.caption">
+          {{ currentStory.caption }}
         </div>
       </div>
 
@@ -159,34 +237,64 @@ interface Story {
       <!-- Bottom Actions -->
       <div class="story-actions">
         <!-- E-commerce Actions -->
-        <div class="ecommerce-actions" *ngIf="currentStory.products.length > 0">
-          <button class="action-btn buy-now" (click)="buyNow()">
+        <div class="ecommerce-actions" *ngIf="currentStory.products && currentStory.products.length > 0">
+          <button class="action-btn buy-now"
+                  (click)="buyNow()"
+                  title="Buy Now"
+                  [attr.aria-label]="'Buy Now - ' + getProductName()">
             <i class="fas fa-bolt"></i>
-            Buy Now
+            <span class="btn-text">Buy Now</span>
+            <span class="tooltip">Buy Now</span>
           </button>
-          <button class="action-btn add-cart" (click)="addToCart()">
+          <button class="action-btn add-cart"
+                  (click)="addToCart()"
+                  title="Add to Cart"
+                  [attr.aria-label]="'Add to Cart - ' + getProductName()">
             <i class="fas fa-shopping-cart"></i>
-            Add to Cart
+            <span class="btn-text">Add to Cart</span>
+            <span class="tooltip">Add to Cart</span>
           </button>
-          <button class="action-btn wishlist" (click)="addToWishlist()">
+          <button class="action-btn wishlist"
+                  (click)="addToWishlist()"
+                  title="Add to Wishlist"
+                  [attr.aria-label]="'Add to Wishlist - ' + getProductName()">
             <i class="fas fa-heart"></i>
-            Wishlist
+            <span class="btn-text">Wishlist</span>
+            <span class="tooltip">Add to Wishlist</span>
           </button>
         </div>
 
         <!-- Social Actions -->
         <div class="social-actions">
-          <button class="social-btn like" [class.liked]="isLiked" (click)="toggleLike()">
+          <button class="social-btn like"
+                  [class.liked]="isLiked"
+                  (click)="toggleLike()"
+                  title="Like Story"
+                  aria-label="Like this story">
             <i class="fas fa-heart"></i>
+            <span class="tooltip">{{ isLiked ? 'Unlike' : 'Like' }}</span>
           </button>
-          <button class="social-btn comment" (click)="openComments()">
+          <button class="social-btn comment"
+                  (click)="openComments()"
+                  title="Comment on Story"
+                  aria-label="Comment on this story">
             <i class="fas fa-comment"></i>
+            <span class="tooltip">Comment</span>
           </button>
-          <button class="social-btn share" (click)="shareStory()">
+          <button class="social-btn share"
+                  (click)="shareStory()"
+                  title="Share Story"
+                  aria-label="Share this story">
             <i class="fas fa-share"></i>
+            <span class="tooltip">Share</span>
           </button>
-          <button class="social-btn sound" (click)="toggleSound()" *ngIf="currentStory.media.type === 'video'">
+          <button class="social-btn sound"
+                  (click)="toggleSound()"
+                  *ngIf="currentStory.media.type === 'video'"
+                  title="Toggle Sound"
+                  aria-label="Toggle sound on/off">
             <i class="fas" [class.fa-volume-up]="!isMuted" [class.fa-volume-mute]="isMuted"></i>
+            <span class="tooltip">{{ isMuted ? 'Unmute' : 'Mute' }}</span>
           </button>
         </div>
       </div>
@@ -489,6 +597,7 @@ interface Story {
       object-fit: contain;
     }
 
+    /* Instagram-style Product Tags */
     .product-tags {
       position: absolute;
       top: 0;
@@ -496,6 +605,127 @@ interface Story {
       width: 100%;
       height: 100%;
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .product-tags.show-tags {
+      opacity: 1;
+    }
+
+    .product-tag {
+      position: absolute;
+      pointer-events: all;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+    }
+
+    .product-dot {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .product-dot::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #000;
+      border-radius: 50%;
+    }
+
+    .product-pulse {
+      position: absolute;
+      width: 140%;
+      height: 140%;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      animation: productPulse 2s infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .product-info {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      margin-bottom: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .product-info::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: rgba(0, 0, 0, 0.8);
+    }
+
+    .product-tag:hover .product-info {
+      opacity: 1;
+    }
+
+    .shopping-indicator {
+      position: absolute;
+      bottom: 120px;
+      left: 16px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+      animation: fadeInUp 0.3s ease;
+      cursor: pointer;
+    }
+
+    .shopping-indicator i {
+      font-size: 14px;
+    }
+
+    @keyframes productPulse {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1.4);
+        opacity: 0;
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .product-tag {
@@ -595,6 +825,43 @@ interface Story {
       justify-content: center;
       gap: 6px;
       transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .action-btn .btn-text {
+      display: inline;
+    }
+
+    .action-btn .tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      margin-bottom: 8px;
+      z-index: 1000;
+    }
+
+    .action-btn .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: rgba(0, 0, 0, 0.9);
+    }
+
+    .action-btn:hover .tooltip {
+      opacity: 1;
     }
 
     .buy-now {
@@ -636,6 +903,39 @@ interface Story {
       align-items: center;
       justify-content: center;
       transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .social-btn .tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      margin-bottom: 8px;
+      z-index: 1000;
+    }
+
+    .social-btn .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: rgba(0, 0, 0, 0.9);
+    }
+
+    .social-btn:hover .tooltip {
+      opacity: 1;
     }
 
     .social-btn:hover {
@@ -942,6 +1242,13 @@ interface Story {
         min-height: 48px; /* Touch-friendly */
       }
 
+      .action-btn .tooltip,
+      .social-btn .tooltip {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        margin-bottom: 6px;
+      }
+
       .social-actions {
         gap: 20px;
       }
@@ -1028,6 +1335,13 @@ interface Story {
         width: 44px;
         height: 44px;
         font-size: 1.1rem;
+      }
+
+      .action-btn .tooltip,
+      .social-btn .tooltip {
+        font-size: 0.65rem;
+        padding: 3px 6px;
+        margin-bottom: 4px;
       }
     }
 
@@ -1120,10 +1434,16 @@ export class StoriesViewerComponent implements OnInit, OnDestroy {
   currentStory!: Story;
   isLiked = false;
   isMuted = true;
+  isPaused = false;
+  showProductTags = false;
   selectedProduct: any = null;
   showCommentsModal = false;
   comments: any[] = [];
   newComment = '';
+
+  // Touch handling
+  private touchStartTime = 0;
+  private longPressTimer: any;
 
   // Navigation slider properties
   canScrollLeft = false;
@@ -1171,7 +1491,103 @@ export class StoriesViewerComponent implements OnInit, OnDestroy {
     if (this.progressTimer) {
       clearTimeout(this.progressTimer);
     }
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+    }
   }
+
+  // Instagram-like interactions
+  togglePause() {
+    this.isPaused = !this.isPaused;
+    if (this.storyVideo) {
+      if (this.isPaused) {
+        this.storyVideo.nativeElement.pause();
+        clearTimeout(this.progressTimer);
+      } else {
+        this.storyVideo.nativeElement.play();
+        this.startStoryTimer();
+      }
+    }
+  }
+
+  toggleProductTags() {
+    this.showProductTags = !this.showProductTags;
+    if (this.showProductTags) {
+      setTimeout(() => {
+        this.showProductTags = false;
+      }, 3000);
+    }
+  }
+
+  onTouchStart(event: TouchEvent) {
+    this.touchStartTime = Date.now();
+    this.longPressTimer = setTimeout(() => {
+      this.isPaused = true;
+      if (this.storyVideo) {
+        this.storyVideo.nativeElement.pause();
+      }
+      clearTimeout(this.progressTimer);
+    }, 200);
+  }
+
+  onTouchEnd(event: TouchEvent) {
+    clearTimeout(this.longPressTimer);
+    if (this.isPaused && Date.now() - this.touchStartTime > 200) {
+      this.isPaused = false;
+      if (this.storyVideo) {
+        this.storyVideo.nativeElement.play();
+      }
+      this.startStoryTimer();
+    }
+  }
+
+  onMouseDown(event: MouseEvent) {
+    this.touchStartTime = Date.now();
+    this.longPressTimer = setTimeout(() => {
+      this.isPaused = true;
+      if (this.storyVideo) {
+        this.storyVideo.nativeElement.pause();
+      }
+      clearTimeout(this.progressTimer);
+    }, 200);
+  }
+
+  onMouseUp(event: MouseEvent) {
+    clearTimeout(this.longPressTimer);
+    if (this.isPaused && Date.now() - this.touchStartTime > 200) {
+      this.isPaused = false;
+      if (this.storyVideo) {
+        this.storyVideo.nativeElement.play();
+      }
+      this.startStoryTimer();
+    }
+  }
+
+  onMediaLoaded() {
+    // Media loaded, start timer
+    this.startStoryTimer();
+  }
+
+  getStoryDuration(story: Story): number {
+    return story.media.type === 'video' ? story.media.duration : 15;
+  }
+
+  handleKeyDown(event: KeyboardEvent) {
+    switch (event.key) {
+      case 'ArrowLeft':
+        this.previousStory();
+        break;
+      case 'ArrowRight':
+      case ' ':
+        this.nextStory();
+        break;
+      case 'Escape':
+        this.closeStories();
+        break;
+    }
+  }
+
+
 
   loadStories() {
     // Load stories from real API
@@ -1459,10 +1875,14 @@ export class StoriesViewerComponent implements OnInit, OnDestroy {
     const now = new Date();
     const diffMs = now.getTime() - new Date(date).getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
+
     if (diffHours < 1) return 'now';
     if (diffHours < 24) return `${diffHours}h`;
     return `${Math.floor(diffHours / 24)}d`;
+  }
+
+  getProductName(): string {
+    return this.currentStory?.products?.[0]?.product?.name || 'Product';
   }
 
 
