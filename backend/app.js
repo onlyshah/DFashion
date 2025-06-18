@@ -310,6 +310,20 @@ try {
     console.error('❌ Error loading brands routes:', error.message);
 }
 
+try {
+    app.use('/api/analytics', require('./routes/analytics'));
+    console.log('✅ Analytics routes loaded');
+} catch (error) {
+    console.error('❌ Error loading analytics routes:', error.message);
+}
+
+try {
+    app.use('/api/recommendations', require('./routes/recommendations'));
+    console.log('✅ Recommendations routes loaded');
+} catch (error) {
+    console.error('❌ Error loading recommendations routes:', error.message);
+}
+
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
     res.json({

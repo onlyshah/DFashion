@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
-import { AuthGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
   {
@@ -21,6 +20,10 @@ const routes: Routes = [
     loadChildren: () => import('./features/shop/shop.routes').then(m => m.shopRoutes)
   },
   {
+    path: 'category/:category',
+    loadComponent: () => import('./features/category/category.component').then(m => m.CategoryComponent)
+  },
+  {
     path: 'products',
     loadChildren: () => import('./features/products/product-detail/product-detail.component').then(m => m.ProductDetailComponent)
   },
@@ -36,7 +39,8 @@ const routes: Routes = [
     path: 'story',
     loadChildren: () => import('./features/story/story.routes').then(m => m.storyRoutes)
   },
-  // Mobile routes (for mobile app compatibility)
+  // Mobile routes (for mobile app compatibility) - Commented out until modules are created
+  /*
   {
     path: 'tabs',
     loadChildren: () => import('./mobile/tabs/tabs.module').then(m => m.TabsPageModule)
@@ -88,16 +92,21 @@ const routes: Routes = [
     loadChildren: () => import('./mobile/notifications/notifications.module').then(m => m.NotificationsPageModule),
     canActivate: [AuthGuard]
   },
-  // Admin routes (web-only)
+  */
+  // Admin routes (web-only) - Commented out until module is created
+  /*
   {
     path: 'admin',
     loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)
   },
-  // Web routes (for desktop/tablet)
+  */
+  // Web routes (for desktop/tablet) - Commented out until module is created
+  /*
   {
     path: 'web',
     loadChildren: () => import('./web/web.module').then(m => m.WebModule)
   },
+  */
   {
     path: '**',
     redirectTo: '/home'

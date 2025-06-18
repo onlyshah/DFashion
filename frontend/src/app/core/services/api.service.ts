@@ -29,7 +29,7 @@ export interface ApiError {
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = environment.apiUrl;
+  private baseUrl = 'http://localhost:5000/api';
 
   constructor(
     private http: HttpClient,

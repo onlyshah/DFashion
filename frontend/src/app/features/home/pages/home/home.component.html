@@ -2,25 +2,10 @@
   <div class="content-grid">
     <!-- Main Feed -->
     <div class="main-content">
-      <app-stories></app-stories>
+      <!-- Instagram-style Stories -->
+      <app-instagram-stories></app-instagram-stories>
 
-      <!-- Shop by Category Section -->
-      <div class="shop-by-category-section">
-        <h2 class="section-title">Shop by Category</h2>
-        <div class="categories-grid">
-          <div
-            *ngFor="let category of categories"
-            class="category-card"
-            (click)="navigateToCategory(category)">
-            <div class="category-icon">{{ category.icon }}</div>
-            <h3 class="category-name">{{ category.name }}</h3>
-            <span class="category-count" *ngIf="category.productCount">
-              {{ category.productCount }} items
-            </span>
-          </div>
-        </div>
-      </div>
-
+      <!-- Instagram-style Feed with Posts and Reels -->
       <app-feed></app-feed>
     </div>
 

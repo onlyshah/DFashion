@@ -6,10 +6,16 @@ const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     console.log('🔐 Auth middleware - Token present:', !!token);
+    console.log('🔐 Auth middleware - JWT_SECRET available:', !!process.env.JWT_SECRET);
 
     if (!token) {
       console.log('🔐 Auth middleware - No token provided');
       return res.status(401).json({ message: 'No token, authorization denied' });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET not found in environment variables');
+      return res.status(500).json({ message: 'Server configuration error' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -116,7 +122,7 @@ const optionalAuth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
-    if (token) {
+    if (token && process.env.JWT_SECRET) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.userId).select('-password');
 

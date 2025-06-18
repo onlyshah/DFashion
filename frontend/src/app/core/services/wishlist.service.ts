@@ -45,7 +45,7 @@ export interface WishlistResponse {
   providedIn: 'root'
 })
 export class WishlistService {
-  private readonly API_URL = environment.apiUrl;
+  private readonly API_URL = 'http://localhost:5000/api';
   private wishlistItemsSubject = new BehaviorSubject<WishlistItem[]>([]);
   private wishlistCountSubject = new BehaviorSubject<number>(0);
 
@@ -53,11 +53,28 @@ export class WishlistService {
   public wishlistCount$ = this.wishlistCountSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    this.loadWishlist();
+    this.initializeWishlist();
+  }
+
+  private initializeWishlist(): void {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // User is authenticated, load from API
+      this.loadWishlist();
+    } else {
+      // Guest user, load from local storage only
+      console.log('🔄 Guest user detected, loading wishlist from local storage only...');
+      this.loadWishlistFromLocalStorage();
+    }
   }
 
   getWishlist(page: number = 1, limit: number = 12): Observable<WishlistResponse> {
-    return this.http.get<WishlistResponse>(`${this.API_URL}/wishlist?page=${page}&limit=${limit}`).pipe(
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+
+    return this.http.get<WishlistResponse>(`${this.API_URL}/wishlist?page=${page}&limit=${limit}`, options).pipe(
       tap(response => {
         if (response.success) {
           this.wishlistItemsSubject.next(response.data.items);
@@ -68,9 +85,14 @@ export class WishlistService {
   }
 
   addToWishlist(productId: string): Observable<any> {
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+
     return this.http.post(`${this.API_URL}/wishlist`, {
       productId
-    }).pipe(
+    }, options).pipe(
       tap(() => {
         this.loadWishlist(); // Refresh wishlist after adding
       })
@@ -78,7 +100,12 @@ export class WishlistService {
   }
 
   removeFromWishlist(productId: string): Observable<any> {
-    return this.http.delete(`${this.API_URL}/wishlist/${productId}`).pipe(
+    const token = localStorage.getItem('token');
+    const options = token ? {
+      headers: { 'Authorization': `Bearer ${token}` }
+    } : {};
+
+    return this.http.delete(`${this.API_URL}/wishlist/${productId}`, options).pipe(
       tap(() => {
         this.loadWishlist(); // Refresh wishlist after removing
       })
@@ -124,12 +151,23 @@ export class WishlistService {
   }
 
   private loadWishlist(): void {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('❌ No authentication token, using local storage fallback');
+      this.loadWishlistFromLocalStorage();
+      return;
+    }
+
     this.getWishlist().subscribe({
       next: (response) => {
         // Wishlist is already updated in the tap operator
       },
       error: (error) => {
         console.error('Failed to load wishlist:', error);
+        if (error.status === 401) {
+          console.log('❌ Authentication failed, clearing token');
+          localStorage.removeItem('token');
+        }
         // Use localStorage as fallback
         this.loadWishlistFromLocalStorage();
       }

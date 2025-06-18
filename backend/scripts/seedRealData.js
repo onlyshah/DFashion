@@ -265,6 +265,172 @@ async function seedRealData() {
           isApproved: true
         },
         socialStats: { postsCount: 0, followersCount: 0, followingCount: 0 }
+      },
+      // AI Fashion Influencers
+      {
+        username: 'ai_fashionista_maya',
+        email: 'maya.ai@dfashion.com',
+        password: plainPassword,
+        fullName: 'Maya Chen',
+        role: 'customer',
+        isActive: true,
+        isVerified: true,
+        phone: '+91 9876543221',
+        bio: '🤖 AI Fashion Influencer | Sustainable Style Advocate | 500K+ Followers | Powered by DFashion AI',
+        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
+        socialStats: {
+          postsCount: 247,
+          followersCount: 523000,
+          followingCount: 1200,
+          engagementRate: 8.5,
+          averageLikes: 42000,
+          averageComments: 3200
+        },
+        preferences: {
+          favoriteCategories: ['sustainable-fashion', 'designer-collection', 'street-style'],
+          stylePersonality: 'Eco-conscious trendsetter with a love for sustainable luxury',
+          contentFocus: ['outfit-styling', 'sustainable-fashion', 'trend-forecasting']
+        },
+        influencerMetrics: {
+          isInfluencer: true,
+          tier: 'mega',
+          specialties: ['sustainable fashion', 'luxury styling', 'trend analysis'],
+          collaborationRate: 15000,
+          avgPostReach: 180000,
+          brandPartnerships: ['EcoLux', 'GreenThread', 'SustainableStyle']
+        }
+      },
+      {
+        username: 'ai_stylist_alex',
+        email: 'alex.ai@dfashion.com',
+        password: plainPassword,
+        fullName: 'Alex Rodriguez',
+        role: 'customer',
+        isActive: true,
+        isVerified: true,
+        phone: '+91 9876543222',
+        bio: '🎨 AI Personal Stylist | Men\'s Fashion Expert | Street Style Curator | 350K+ Community',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        socialStats: {
+          postsCount: 189,
+          followersCount: 347000,
+          followingCount: 890,
+          engagementRate: 9.2,
+          averageLikes: 31000,
+          averageComments: 2800
+        },
+        preferences: {
+          favoriteCategories: ['street-style', 'formal-wear', 'sportswear'],
+          stylePersonality: 'Urban sophisticate with athletic edge',
+          contentFocus: ['mens-styling', 'street-fashion', 'fitness-fashion']
+        },
+        influencerMetrics: {
+          isInfluencer: true,
+          tier: 'macro',
+          specialties: ['mens fashion', 'street style', 'athletic wear'],
+          collaborationRate: 12000,
+          avgPostReach: 145000,
+          brandPartnerships: ['UrbanEdge', 'SportLux', 'StreetCouture']
+        }
+      },
+      {
+        username: 'ai_trendsetter_zara',
+        email: 'zara.ai@dfashion.com',
+        password: plainPassword,
+        fullName: 'Zara Patel',
+        role: 'customer',
+        isActive: true,
+        isVerified: true,
+        phone: '+91 9876543223',
+        bio: '✨ AI Trend Forecaster | Ethnic Fusion Expert | Beauty & Fashion | 280K+ Style Enthusiasts',
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
+        socialStats: {
+          postsCount: 312,
+          followersCount: 284000,
+          followingCount: 1500,
+          engagementRate: 7.8,
+          averageLikes: 22000,
+          averageComments: 1900
+        },
+        preferences: {
+          favoriteCategories: ['ethnic-wear', 'beauty-cosmetics', 'festival-party'],
+          stylePersonality: 'Cultural fusion trendsetter with modern twist',
+          contentFocus: ['ethnic-fusion', 'beauty-trends', 'festival-fashion']
+        },
+        influencerMetrics: {
+          isInfluencer: true,
+          tier: 'macro',
+          specialties: ['ethnic wear', 'beauty trends', 'cultural fashion'],
+          collaborationRate: 10000,
+          avgPostReach: 120000,
+          brandPartnerships: ['EthnicChic', 'BeautyBlend', 'CulturalCouture']
+        }
+      },
+      {
+        username: 'ai_minimalist_kai',
+        email: 'kai.ai@dfashion.com',
+        password: plainPassword,
+        fullName: 'Kai Thompson',
+        role: 'customer',
+        isActive: true,
+        isVerified: true,
+        phone: '+91 9876543224',
+        bio: '🌿 AI Minimalist | Capsule Wardrobe Expert | Slow Fashion Advocate | 195K+ Mindful Followers',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+        socialStats: {
+          postsCount: 156,
+          followersCount: 195000,
+          followingCount: 650,
+          engagementRate: 11.2,
+          averageLikes: 21000,
+          averageComments: 2100
+        },
+        preferences: {
+          favoriteCategories: ['sustainable-fashion', 'formal-wear', 'workwear'],
+          stylePersonality: 'Minimalist professional with sustainable values',
+          contentFocus: ['capsule-wardrobe', 'sustainable-living', 'professional-style']
+        },
+        influencerMetrics: {
+          isInfluencer: true,
+          tier: 'macro',
+          specialties: ['minimalist fashion', 'sustainable living', 'professional wear'],
+          collaborationRate: 8000,
+          avgPostReach: 95000,
+          brandPartnerships: ['MinimalChic', 'EcoWork', 'SustainablePro']
+        }
+      },
+      {
+        username: 'ai_glamour_sophia',
+        email: 'sophia.ai@dfashion.com',
+        password: plainPassword,
+        fullName: 'Sophia Williams',
+        role: 'customer',
+        isActive: true,
+        isVerified: true,
+        phone: '+91 9876543225',
+        bio: '💎 AI Luxury Curator | High Fashion Enthusiast | Red Carpet Specialist | 420K+ Glamour Lovers',
+        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+        socialStats: {
+          postsCount: 203,
+          followersCount: 418000,
+          followingCount: 980,
+          engagementRate: 6.9,
+          averageLikes: 28000,
+          averageComments: 2400
+        },
+        preferences: {
+          favoriteCategories: ['designer-collection', 'festival-party', 'beauty-cosmetics'],
+          stylePersonality: 'Luxury fashion connoisseur with glamorous taste',
+          contentFocus: ['luxury-fashion', 'red-carpet-looks', 'high-end-beauty']
+        },
+        influencerMetrics: {
+          isInfluencer: true,
+          tier: 'mega',
+          specialties: ['luxury fashion', 'red carpet styling', 'high-end beauty'],
+          collaborationRate: 18000,
+          avgPostReach: 200000,
+          brandPartnerships: ['LuxeStyle', 'GlamourHouse', 'HighEndBeauty']
+        }
       }
     ]);
     console.log(`✅ Created ${users.length} users\n`);
@@ -478,6 +644,258 @@ async function seedRealData() {
           metaTitle: 'Formal Wear - DFashion',
           metaDescription: 'Professional formal wear for office and events',
           metaKeywords: ['formal wear', 'suits', 'professional clothing']
+        }
+      },
+      {
+        name: 'Beauty & Cosmetics',
+        slug: 'beauty-cosmetics',
+        description: 'Beauty products and cosmetics',
+        image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400',
+        icon: '💄',
+        isActive: true,
+        isFeatured: true,
+        sortOrder: 11,
+        subcategories: [
+          { name: 'Makeup', slug: 'makeup', description: 'Face and eye makeup' },
+          { name: 'Skincare', slug: 'skincare', description: 'Skincare products' },
+          { name: 'Fragrances', slug: 'fragrances', description: 'Perfumes and body sprays' },
+          { name: 'Hair Care', slug: 'hair-care', description: 'Hair styling and care products' }
+        ],
+        seo: {
+          metaTitle: 'Beauty & Cosmetics - DFashion',
+          metaDescription: 'Premium beauty products and cosmetics',
+          metaKeywords: ['beauty', 'cosmetics', 'makeup', 'skincare']
+        }
+      },
+      {
+        name: 'Lingerie & Innerwear',
+        slug: 'lingerie-innerwear',
+        description: 'Intimate apparel and undergarments',
+        image: 'https://images.unsplash.com/photo-1571513722275-4b8c2fd1a06b?w=400',
+        icon: '👙',
+        isActive: true,
+        isFeatured: false,
+        sortOrder: 12,
+        subcategories: [
+          { name: 'Bras', slug: 'bras', description: 'Comfortable and stylish bras' },
+          { name: 'Panties', slug: 'panties', description: 'Everyday and special occasion panties' },
+          { name: 'Sleepwear', slug: 'sleepwear', description: 'Comfortable nightwear' },
+          { name: 'Men\'s Underwear', slug: 'mens-underwear', description: 'Men\'s undergarments' }
+        ],
+        seo: {
+          metaTitle: 'Lingerie & Innerwear - DFashion',
+          metaDescription: 'Comfortable and stylish intimate apparel',
+          metaKeywords: ['lingerie', 'innerwear', 'undergarments', 'sleepwear']
+        }
+      },
+      {
+        name: 'Home & Living',
+        slug: 'home-living',
+        description: 'Home decor and lifestyle products',
+        image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400',
+        icon: '🏠',
+        isActive: true,
+        isFeatured: false,
+        sortOrder: 13,
+        subcategories: [
+          { name: 'Bedding', slug: 'bedding', description: 'Bed sheets and pillows' },
+          { name: 'Curtains', slug: 'curtains', description: 'Window treatments' },
+          { name: 'Cushions', slug: 'cushions', description: 'Decorative cushions' },
+          { name: 'Rugs', slug: 'rugs', description: 'Floor rugs and carpets' }
+        ],
+        seo: {
+          metaTitle: 'Home & Living - DFashion',
+          metaDescription: 'Stylish home decor and living essentials',
+          metaKeywords: ['home decor', 'bedding', 'curtains', 'lifestyle']
+        }
+      },
+      {
+        name: 'Maternity Wear',
+        slug: 'maternity-wear',
+        description: 'Comfortable clothing for expecting mothers',
+        image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400',
+        icon: '🤱',
+        isActive: true,
+        isFeatured: false,
+        sortOrder: 14,
+        subcategories: [
+          { name: 'Maternity Tops', slug: 'maternity-tops', description: 'Comfortable maternity tops' },
+          { name: 'Maternity Dresses', slug: 'maternity-dresses', description: 'Stylish maternity dresses' },
+          { name: 'Maternity Jeans', slug: 'maternity-jeans', description: 'Comfortable maternity jeans' },
+          { name: 'Nursing Wear', slug: 'nursing-wear', description: 'Nursing-friendly clothing' }
+        ],
+        seo: {
+          metaTitle: 'Maternity Wear - DFashion',
+          metaDescription: 'Comfortable and stylish maternity clothing',
+          metaKeywords: ['maternity wear', 'pregnancy clothes', 'nursing wear']
+        }
+      },
+      {
+        name: 'Plus Size',
+        slug: 'plus-size',
+        description: 'Fashionable clothing in extended sizes',
+        image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400',
+        icon: '👗',
+        isActive: true,
+        isFeatured: true,
+        sortOrder: 15,
+        subcategories: [
+          { name: 'Plus Size Tops', slug: 'plus-size-tops', description: 'Stylish plus size tops' },
+          { name: 'Plus Size Dresses', slug: 'plus-size-dresses', description: 'Beautiful plus size dresses' },
+          { name: 'Plus Size Jeans', slug: 'plus-size-jeans', description: 'Comfortable plus size jeans' },
+          { name: 'Plus Size Activewear', slug: 'plus-size-activewear', description: 'Plus size workout clothes' }
+        ],
+        seo: {
+          metaTitle: 'Plus Size Fashion - DFashion',
+          metaDescription: 'Trendy fashion in extended sizes',
+          metaKeywords: ['plus size', 'extended sizes', 'curvy fashion']
+        }
+      },
+      {
+        name: 'Vintage & Retro',
+        slug: 'vintage-retro',
+        description: 'Classic vintage and retro fashion',
+        image: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400',
+        icon: '🕰️',
+        isActive: true,
+        isFeatured: false,
+        sortOrder: 16,
+        subcategories: [
+          { name: 'Vintage Dresses', slug: 'vintage-dresses', description: 'Classic vintage dresses' },
+          { name: 'Retro Tops', slug: 'retro-tops', description: 'Retro style tops' },
+          { name: 'Vintage Accessories', slug: 'vintage-accessories', description: 'Classic accessories' },
+          { name: 'Retro Footwear', slug: 'retro-footwear', description: 'Vintage style shoes' }
+        ],
+        seo: {
+          metaTitle: 'Vintage & Retro Fashion - DFashion',
+          metaDescription: 'Classic vintage and retro fashion pieces',
+          metaKeywords: ['vintage', 'retro', 'classic fashion', 'throwback']
+        }
+      },
+      {
+        name: 'Sustainable Fashion',
+        slug: 'sustainable-fashion',
+        description: 'Eco-friendly and sustainable clothing',
+        image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
+        icon: '🌱',
+        isActive: true,
+        isFeatured: true,
+        sortOrder: 17,
+        subcategories: [
+          { name: 'Organic Cotton', slug: 'organic-cotton', description: 'Organic cotton clothing' },
+          { name: 'Recycled Materials', slug: 'recycled-materials', description: 'Clothes from recycled materials' },
+          { name: 'Eco-Friendly Dyes', slug: 'eco-friendly-dyes', description: 'Naturally dyed clothing' },
+          { name: 'Upcycled Fashion', slug: 'upcycled-fashion', description: 'Upcycled and repurposed clothing' }
+        ],
+        seo: {
+          metaTitle: 'Sustainable Fashion - DFashion',
+          metaDescription: 'Eco-friendly and sustainable fashion choices',
+          metaKeywords: ['sustainable fashion', 'eco-friendly', 'organic', 'green fashion']
+        }
+      },
+      {
+        name: 'Designer Collection',
+        slug: 'designer-collection',
+        description: 'Premium designer fashion pieces',
+        image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=400',
+        icon: '✨',
+        isActive: true,
+        isFeatured: true,
+        sortOrder: 18,
+        subcategories: [
+          { name: 'Designer Dresses', slug: 'designer-dresses', description: 'Luxury designer dresses' },
+          { name: 'Designer Bags', slug: 'designer-bags', description: 'Premium designer handbags' },
+          { name: 'Designer Shoes', slug: 'designer-shoes', description: 'Luxury footwear' },
+          { name: 'Designer Jewelry', slug: 'designer-jewelry', description: 'High-end jewelry pieces' }
+        ],
+        seo: {
+          metaTitle: 'Designer Collection - DFashion',
+          metaDescription: 'Luxury designer fashion and accessories',
+          metaKeywords: ['designer fashion', 'luxury', 'premium', 'high-end']
+        }
+      },
+      {
+        name: 'Street Style',
+        slug: 'street-style',
+        description: 'Urban and street fashion',
+        image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400',
+        icon: '🏙️',
+        isActive: true,
+        isFeatured: false,
+        sortOrder: 19,
+        subcategories: [
+          { name: 'Hoodies & Sweatshirts', slug: 'hoodies-sweatshirts', description: 'Urban hoodies and sweatshirts' },
+          { name: 'Graphic Tees', slug: 'graphic-tees', description: 'Statement graphic t-shirts' },
+          { name: 'Streetwear Sneakers', slug: 'streetwear-sneakers', description: 'Trendy street sneakers' },
+          { name: 'Urban Accessories', slug: 'urban-accessories', description: 'Street style accessories' }
+        ],
+        seo: {
+          metaTitle: 'Street Style Fashion - DFashion',
+          metaDescription: 'Urban street fashion and trendy streetwear',
+          metaKeywords: ['street style', 'urban fashion', 'streetwear', 'trendy']
+        }
+      },
+      {
+        name: 'Workwear',
+        slug: 'workwear',
+        description: 'Professional workwear and uniforms',
+        image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
+        icon: '💼',
+        isActive: true,
+        isFeatured: false,
+        sortOrder: 20,
+        subcategories: [
+          { name: 'Office Wear', slug: 'office-wear', description: 'Professional office clothing' },
+          { name: 'Scrubs', slug: 'scrubs', description: 'Medical scrubs and uniforms' },
+          { name: 'Chef Wear', slug: 'chef-wear', description: 'Chef uniforms and aprons' },
+          { name: 'Safety Wear', slug: 'safety-wear', description: 'Industrial safety clothing' }
+        ],
+        seo: {
+          metaTitle: 'Workwear & Uniforms - DFashion',
+          metaDescription: 'Professional workwear and uniform solutions',
+          metaKeywords: ['workwear', 'uniforms', 'professional clothing', 'office wear']
+        }
+      },
+      {
+        name: 'Festival & Party',
+        slug: 'festival-party',
+        description: 'Festive and party wear collection',
+        image: 'https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?w=400',
+        icon: '🎉',
+        isActive: true,
+        isFeatured: true,
+        sortOrder: 21,
+        subcategories: [
+          { name: 'Party Dresses', slug: 'party-dresses', description: 'Glamorous party dresses' },
+          { name: 'Festival Outfits', slug: 'festival-outfits', description: 'Colorful festival clothing' },
+          { name: 'Cocktail Wear', slug: 'cocktail-wear', description: 'Elegant cocktail attire' },
+          { name: 'Dance Costumes', slug: 'dance-costumes', description: 'Performance and dance wear' }
+        ],
+        seo: {
+          metaTitle: 'Festival & Party Wear - DFashion',
+          metaDescription: 'Stunning festival and party wear collection',
+          metaKeywords: ['party wear', 'festival fashion', 'cocktail dress', 'celebration']
+        }
+      },
+      {
+        name: 'Travel & Vacation',
+        slug: 'travel-vacation',
+        description: 'Comfortable travel and vacation wear',
+        image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400',
+        icon: '✈️',
+        isActive: true,
+        isFeatured: false,
+        sortOrder: 22,
+        subcategories: [
+          { name: 'Resort Wear', slug: 'resort-wear', description: 'Relaxed resort clothing' },
+          { name: 'Beach Wear', slug: 'beach-wear', description: 'Beach and swimwear' },
+          { name: 'Travel Accessories', slug: 'travel-accessories', description: 'Travel-friendly accessories' },
+          { name: 'Comfortable Shoes', slug: 'comfortable-shoes', description: 'Walking and travel shoes' }
+        ],
+        seo: {
+          metaTitle: 'Travel & Vacation Wear - DFashion',
+          metaDescription: 'Comfortable and stylish travel clothing',
+          metaKeywords: ['travel wear', 'vacation clothes', 'resort fashion', 'beach wear']
         }
       }
     ]);

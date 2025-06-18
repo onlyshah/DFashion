@@ -60,7 +60,12 @@
   <div class="categories">
     <h3>Shop by Category</h3>
     <div class="category-grid">
-      <div *ngFor="let category of categories" class="category-item" (click)="browseCategory(category.slug)">
+      <div
+        *ngFor="let category of categories"
+        class="category-item"
+        (click)="browseCategory(category.slug)"
+        [routerLink]="['/category', category.slug]"
+        routerLinkActive="active">
         <img [src]="category.image" [alt]="category.name">
         <span>{{ category.name }}</span>
       </div>

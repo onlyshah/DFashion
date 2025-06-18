@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 
 import { ProductService } from '../../../../core/services/product.service';
 import { Product } from '../../../../core/models/product.model';
@@ -7,7 +8,7 @@ import { Product } from '../../../../core/models/product.model';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss']
 })
@@ -17,7 +18,10 @@ export class SidebarComponent implements OnInit {
   topInfluencers: any[] = [];
   categories: any[] = [];
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
     this.loadSuggestedUsers();
@@ -94,6 +98,6 @@ export class SidebarComponent implements OnInit {
 
   browseCategory(categorySlug: string) {
     console.log('Browse category:', categorySlug);
-    // TODO: Navigate to category page
+    this.router.navigate(['/category', categorySlug]);
   }
 }

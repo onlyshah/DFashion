@@ -35,7 +35,7 @@ export interface CartSummary {
   providedIn: 'root'
 })
 export class CartService {
-  private readonly API_URL = environment.apiUrl;
+  private readonly API_URL = 'http://localhost:5000/api';
   private cartItems = new BehaviorSubject<CartItem[]>([]);
   private cartSummary = new BehaviorSubject<CartSummary | null>(null);
   private cartItemCount = new BehaviorSubject<number>(0);
@@ -57,7 +57,20 @@ export class CartService {
     private storageService: StorageService,
     private toastController: ToastController
   ) {
-    this.loadCart();
+    // Initialize cart on service creation - but only load from storage for guest users
+    this.initializeCart();
+  }
+
+  private initializeCart() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // User is authenticated, load from API
+      this.loadCart();
+    } else {
+      // Guest user, load from local storage only
+      console.log('🔄 Guest user detected, loading cart from local storage only...');
+      this.loadCartFromStorage();
+    }
   }
 
   // Get cart from API

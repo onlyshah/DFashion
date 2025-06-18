@@ -10,7 +10,7 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly API_URL = environment.apiUrl;
+  private readonly API_URL = 'http://localhost:5000/api';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
 
