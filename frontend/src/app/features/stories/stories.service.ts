@@ -3,44 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-export interface Story {
-  _id: string;
-  user: {
-    _id: string;
-    username: string;
-    fullName: string;
-    avatar?: string;
-  };
-  media: {
-    type: 'image' | 'video';
-    url: string;
-    duration: number;
-    thumbnail?: string;
-  };
-  caption?: string;
-  products: {
-    _id: string;
-    product: any;
-    position: { x: number; y: number };
-  }[];
-  viewers: { user: string; viewedAt: Date }[];
-  likes: { user: string; likedAt: Date }[];
-  comments: {
-    _id: string;
-    user: any;
-    text: string;
-    commentedAt: Date;
-  }[];
-  isActive: boolean;
-  expiresAt: Date;
-  createdAt: Date;
-  analytics: {
-    views: number;
-    likes: number;
-    comments: number;
-    shares: number;
-  };
-}
+import { Story } from 'src/app/core/models/story.model';
 
 export interface StoryGroup {
   user: {

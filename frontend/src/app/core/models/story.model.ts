@@ -1,5 +1,6 @@
 export interface Story {
   _id: string;
+  isLiked?: boolean;
   user: {
     _id: string;
     username: string;

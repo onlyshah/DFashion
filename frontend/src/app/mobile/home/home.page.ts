@@ -4,6 +4,7 @@ import { ProductService } from '../../core/services/product.service';
 import { StoryService } from '../../core/services/story.service';
 import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ActionSheetController, ModalController } from '@ionic/angular';
 
 @Component({
   selector: 'app-home',
@@ -11,6 +12,59 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+  constructor(
+    private router: Router,
+    private productService: ProductService,
+    private storyService: StoryService,
+    private postService: PostService,
+    private authService: AuthService,
+    private actionSheetCtrl: ActionSheetController,
+    private modalCtrl: ModalController
+  ) {}
+
+  async openAddActionSheet() {
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: 'Create',
+      buttons: [
+        {
+          text: 'Create Story',
+          icon: 'images',
+          handler: () => this.openCreateStoryModal()
+        },
+        {
+          text: 'Create Reel',
+          icon: 'videocam',
+          handler: () => this.openCreateReelModal()
+        },
+        {
+          text: 'Create Post',
+          icon: 'create',
+          handler: () => this.openCreatePostModal()
+        },
+        {
+          text: 'Cancel',
+          icon: 'close',
+          role: 'cancel'
+        }
+      ]
+    });
+    await actionSheet.present();
+  }
+
+  openCreateStoryModal() {
+    // TODO: Implement story creation modal (camera/gallery, caption, upload)
+    alert('Story creation modal (Instagram-style) goes here.');
+  }
+
+  openCreateReelModal() {
+    // TODO: Implement reel creation modal (live camera, record, preview, upload)
+    alert('Reel creation modal (TikTok-style) goes here.');
+  }
+
+  openCreatePostModal() {
+    // TODO: Implement post creation modal/page
+    this.router.navigate(['/posts/create']);
+  }
   featuredProducts: any[] = [];
   recentStories: any[] = [];
   trendingPosts: any[] = [];
@@ -52,7 +106,9 @@ export class HomePage implements OnInit {
     private productService: ProductService,
     private storyService: StoryService,
     private postService: PostService,
-    private authService: AuthService
+    private authService: AuthService,
+    private actionSheetCtrl: ActionSheetController,
+    private modalCtrl: ModalController
   ) {}
 
   ngOnInit() {

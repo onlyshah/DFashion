@@ -2,8 +2,35 @@ const express = require('express');
 const Story = require('../models/Story');
 const { auth, optionalAuth } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
+const multer = require('multer');
+const path = require('path');
 
 const router = express.Router();
+
+// Multer setup for story uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../uploads/stories'));
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + ext;
+    cb(null, uniqueName);
+  }
+});
+const upload = multer({ storage });
+
+// @route   POST /api/stories/upload
+// @desc    Upload story media (image/video)
+// @access  Private
+router.post('/upload', auth, upload.single('media'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  // Construct the public URL for the uploaded file
+  const fileUrl = `/uploads/stories/${req.file.filename}`;
+  res.json({ url: fileUrl, type: req.file.mimetype.startsWith('video') ? 'video' : 'image' });
+});
 
 // @route   GET /api/stories
 // @desc    Get all active stories

@@ -1,0 +1,44 @@
+<!-- Instagram-style Stories Bar -->
+<div class="stories-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoadingStories" class="stories-loading">
+    <div *ngFor="let item of [1,2,3,4,5]" class="story-skeleton">
+      <div class="skeleton-avatar"></div>
+      <div class="skeleton-name"></div>
+    </div>
+  </div>
+
+  <!-- Stories Slider with Arrows -->
+  <div class="stories-slider-wrapper" *ngIf="!isLoadingStories">
+    <button class="arrow left" (click)="scrollStoriesLeft()" [disabled]="!canScrollStoriesLeft">&#8592;</button>
+    <div class="stories-slider" #storiesSlider>
+      <!-- Add Story Button -->
+      <div class="story-item add-story-item" (click)="onAdd()">
+        <div class="story-avatar-container">
+          <div class="story-avatar add-story-avatar">
+            <div class="story-avatar-inner">
+              <img class="story-avatar-img" [src]="currentUser?.avatar || 'assets/default-avatar.png'" alt="Your Story">
+              <span class="add-story-plus">+</span>
+            </div>
+          </div>
+        </div>
+        <div class="story-username">Your Story</div>
+      </div>
+      <!-- Other Stories -->
+      <div
+        *ngFor="let story of stories; let i = index"
+        class="story-item"
+        (click)="openStories(i)">
+        <div class="story-avatar-container">
+          <div class="story-avatar">
+            <div class="story-avatar-inner">
+              <img class="story-avatar-img" [src]="story.user.avatar" [alt]="story.user.username">
+            </div>
+          </div>
+        </div>
+        <div class="story-username">{{ story.user.username }}</div>
+      </div>
+    </div>
+    <button class="arrow right" (click)="scrollStoriesRight()" [disabled]="!canScrollStoriesRight">&#8594;</button>
+  </div>
+</div>

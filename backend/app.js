@@ -80,7 +80,8 @@ try {
     console.log('⚠️ Order model not found:', err.message);
 }
 
-app.use('/uploads', express.static('uploads'));
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Import Middleware (test basic functionality first)
 let auth, requireAdmin, requireRole;

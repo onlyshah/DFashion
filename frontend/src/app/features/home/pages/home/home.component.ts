@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { InstagramStoriesComponent } from '../../components/instagram-stories/instagram-stories.component';
+import { ViewAddStoriesComponent } from '../../components/instagram-stories/view-add-stories.component';
 import { FeedComponent } from '../../components/feed/feed.component';
 import { SidebarComponent } from '../../components/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, InstagramStoriesComponent, FeedComponent, SidebarComponent],
+  imports: [CommonModule, ViewAddStoriesComponent, FeedComponent, SidebarComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
